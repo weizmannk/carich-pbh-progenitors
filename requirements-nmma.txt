@@ -1,0 +1,4 @@
+# nmma itself is installed from the GitHub main branch by `make setup-nmma`
+# (PyPI 1.0.1 has known bugs), not listed here.
+astropy
+dustmaps
