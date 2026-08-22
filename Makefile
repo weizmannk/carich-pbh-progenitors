@@ -45,24 +45,17 @@ setup-mosfit:
 
 #  ============ NMMA ============
 
-# nmma's lightcurve-analysis defaults to --sampler dynesty in this repo (no
-# native build needed); pymultinest is still built and installed so
-# --sampler pymultinest remains available on request.
+# Default sampler is dynesty; pymultinest is still installed for --sampler
+# pymultinest on request.
 #
-# nmma is installed from GitHub, not PyPI (the 1.0.1 release has known bugs
-# already fixed upstream), pinned to a specific commit so `make setup-nmma`
-# stays reproducible instead of silently tracking main.
-NMMA_COMMIT := 4342b6abb1d70eb6f3e60afcc138662386d3c29a
+# nmma comes from GitHub, pinned to v1.0.2 (fixes bugs in PyPI's 1.0.1,
+# not yet released there).
+NMMA_VERSION := v1.0.2
 setup-nmma: setup-multinest
 	uv venv .venv-nmma
 	uv pip install --python .venv-nmma -r requirements-nmma.txt
-	rm -rf /tmp/nmma
-	git clone https://github.com/nuclear-multimessenger-astronomy/nmma /tmp/nmma
-	cd /tmp/nmma && git checkout $(NMMA_COMMIT)
-	uv pip install --python .venv-nmma /tmp/nmma
-	rm -rf /tmp/pymultinest
-	git clone https://github.com/JohannesBuchner/PyMultiNest /tmp/pymultinest
-	uv pip install --python .venv-nmma /tmp/pymultinest
+	uv pip install --python .venv-nmma "git+https://github.com/nuclear-multimessenger-astronomy/nmma@$(NMMA_VERSION)"
+	uv pip install --python .venv-nmma "git+https://github.com/JohannesBuchner/PyMultiNest"
 	echo 'export $(LIB_PATH_VAR)=$(HOME)/.local/lib:$$$(LIB_PATH_VAR)' >> .venv-nmma/bin/activate
 
 setup-multinest:

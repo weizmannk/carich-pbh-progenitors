@@ -1,4 +1,4 @@
-"""NMMA prior configuration: timeshift + D_L safeguard (nmma>=1.0.1).
+"""NMMA prior configuration: timeshift + D_L safeguard (nmma>=1.0.2).
 
 Always applied, even without --timeshift: patching luminosity_distance.minimum
 to be > 0 avoids a CosmologyError in check_model_time_consistency (z_at_value
