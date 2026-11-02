@@ -118,7 +118,7 @@ submit-redback:
 # redback: its own environment.
 #
 # Each fitter gets its own venv. With nmma v1.0.2 the two are closer than they
-# used to be -- both resolve bilby 2.8.2 -- but they still disagree on the
+# used to be, both resolve bilby 2.8.2, but they still disagree on the
 # array stack (measured: redback numpy 2.5.4 / pandas 3.0.6, nmma numpy 2.3.5 /
 # pandas 3.1.0), and MOSFiT pins numpy <=1.26.4, which neither tolerates.
 # Separate interpreters also keep a redback upgrade from silently changing an

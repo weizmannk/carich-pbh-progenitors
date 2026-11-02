@@ -1,25 +1,14 @@
-# cooling_envelope, redback 1.20.0's bundled prior, regenerated verbatim.
+# cooling_envelope, regenerated from redback.priors.get_priors('cooling_envelope').
+# An exact copy of what redback ships: no key is overridden here.
+# Constraints are NOT in this file; redback_priors loads them with
+# get_priors(model, constraint=True) and this file only overrides keys.
 #
-# Source: redback.priors.get_priors('cooling_envelope'), serialised with
-# PriorDict.to_file(). Distributions, bounds and latex labels are identical to
-# redback/priors/cooling_envelope.prior; only the written form differs (explicit keyword
-# arguments instead of positional). Checked by
-# tests/test_redback_pipeline.py::test_prior_files_match_redback.
-#
-# Versioned here so a bound can be changed deliberately, and so a redback upgrade
-# that moves one shows up as a test failure instead of silently changing a fit.
-#
-# Physical constraints are NOT in this file: they are Constraint priors attached
-# by get_priors(model, constraint=True) and added by fit_redback.build_priors.
-#
-# Preserved from redback's own cooling_envelope.prior:
-#   eta > eta_min(mbh_6, stellar_mass) and beta < beta_max(mbh_6, stellar_mass)
-#   must hold for physical solutions. These bounds depend on sampled parameter
-#   combinations, so pass constraint=True to get_priors() or fit_model() to have
-#   bilby reject invalid samples automatically.
-# fit_redback.build_priors does exactly that, and raises if the Constraint priors
-# turn out to be absent, attaching only a conversion function computes the
-# constraint and then ignores it.
+# redback's own file carries this warning, and to_file() drops comments, so it
+# is restored here deliberately: the constraints (eta_min, beta_max) are NOT in
+# this file. They come from get_priors(model, constraint=True), which
+# redback_priors calls; this file only overrides keys on top of that. Loading
+# it alone would compute the constraint ratio and then discard it, which is the
+# bug this pipeline used to have.
 
 redshift = Uniform(minimum=1e-06, maximum=3, name='redshift', latex_label='$z$', unit=None, boundary=None)
 mbh_6 = LogUniform(minimum=0.1, maximum=10, name='mbh_6', latex_label='$M_{\\mathrm{BH}}~[10^{6}~M_{\\odot}]$', unit=None, boundary=None)

@@ -1,0 +1,17 @@
+# sncosmo_models, the SALT family: salt2, salt3, salt2-extended.
+#
+# Copied verbatim from redback's own priors/salt2.prior, which gives the same
+# values as examples/using_sncosmo_models_to_fit.py. SALT3 is a retraining of
+# SALT2 on the same parameterisation, so the same values apply.
+#
+# redshift runs from 0.01, the lower bound of redback's own
+# sn1998bw_template.prior, to 3, the upper bound it gives its supernova
+# models. It is sampled
+# only when neither --z-known nor --z-phot is given; either of those replaces it
+# with a DeltaFunction or a TruncatedGaussian at run time. The fit also
+# truncates it to the template's spectral validity for the bands in the data
+# file, which cannot be known here.
+redshift = Uniform(minimum=0.01, maximum=3, name='redshift', latex_label='$z$')
+x0 = Uniform(minimum=1e-10, maximum=1e-1, name='x0', latex_label='$x_0$')
+x1 = Normal(mu=0, sigma=1, name='x1', latex_label='$x_1$')
+c = Normal(mu=0, sigma=0.1, name='c', latex_label='$c$')

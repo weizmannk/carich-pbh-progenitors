@@ -1,0 +1,18 @@
+# sncosmo_models, every template whose source parameter is a bare amplitude.
+# Used for anything --sncosmo-model names except the SALT family.
+#
+# redback ships no prior for sncosmo_models. amplitude here is a RAW flux
+# normalisation, not the normalised amplitude of redback's
+# sn1998bw_template.prior where 1.0 is SN 1998bw itself, so no range could be
+# copied. Derived with sncosmo's own set_source_peakabsmag, spanning M_peak in
+# (-14, -22) over z in (0.001, 3), for every non-SALT template.
+#
+# redshift runs from 0.01, the lower bound of redback's own
+# sn1998bw_template.prior, to 3, the upper bound it gives its supernova
+# models. It is sampled
+# only when neither --z-known nor --z-phot is given; either of those replaces it
+# with a DeltaFunction or a TruncatedGaussian at run time. The fit also
+# truncates it to the template's spectral validity for the bands in the data
+# file, which cannot be known here.
+redshift = Uniform(minimum=0.01, maximum=3, name='redshift', latex_label='$z$')
+amplitude = LogUniform(minimum=1.399e-22, maximum=3.567e-02, name='amplitude', latex_label='$A$')

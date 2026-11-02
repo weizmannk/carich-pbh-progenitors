@@ -68,8 +68,16 @@ import numpy as np
 import plot_redback
 import redback
 from model_descriptions import describe
-from redback_data import build_transient, first_detection_mjd, read_photometry
-from redback_models import MODELS, T0_WINDOW, observed_model
+from redback_data import build_transient, first_epoch_mjd, read_photometry
+from redback_models import (
+    MODELS,
+    SNCOSMO_MODEL,
+    T0_WINDOW,
+    model_kwargs,
+    observed_model,
+    sncosmo_prior_stem,
+    time_parameter,
+)
 from redback_priors import build_priors, extinction_summary
 
 logger = logging.getLogger(__name__)
@@ -103,6 +111,8 @@ class RunConfig:
     av_host_max: float
     t0_min: float
     t0_max: float
+    sncosmo_model: str
+    plot_theme: str
     data_tmin: float | None
     data_tmax: float | None
     upper_limit_sigma: float
@@ -227,6 +237,22 @@ def parse_args() -> argparse.Namespace:
         help="Latest t0, same units",
     )
     parser.add_argument(
+        "--plot-theme",
+        choices=tuple(plot_redback.THEMES),
+        default=plot_redback.DEFAULT_THEME,
+        dest="plot_theme",
+        help="Figure palette. Only 'print', a plain figure for a paper, ships "
+        "with this repository; others appear when a local palette module is "
+        "present",
+    )
+    parser.add_argument(
+        "--sncosmo-model",
+        default="v19-1993j-corr",
+        dest="sncosmo_model",
+        help="sncosmo template name, used only by --model sncosmo_models. Any "
+        "source sncosmo can load, e.g. v19-1993j-corr, nugent-sn2p, salt3",
+    )
+    parser.add_argument(
         "--data-tmin",
         type=float,
         default=None,
@@ -245,13 +271,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--upper-limit-sigma",
         type=float,
-        default=5.0,
+        default=3.0,
         dest="upper_limit_sigma",
-        help="Sigma level of the non-detections, redback's own meaning for this "
-        "parameter. 5 matches the ATLAS 5-sigma limiting magnitudes the ingest "
-        "step writes; it sets the width of the survival term",
+        help="Sigma level of the non-detections. redback's own default, 3.0, "
+        "which sets the survival width to (2.5/ln10)/3 = 0.362 mag. Raise it "
+        "only if the file's limits are known to be at another level; this one "
+        "records none",
     )
-    parser.add_argument("--nlive", type=int, default=1000)
+    parser.add_argument("--nlive", type=int, default=2048)
     parser.add_argument(
         "--sampler",
         default="pymultinest",
@@ -329,7 +356,15 @@ def resolve_config(args: argparse.Namespace) -> RunConfig:
 
     priors = args.priors
     if priors is None:
-        default_prior = repo_root() / "priors_redback" / f"{args.model}.prior"
+        # The sncosmo path resolves by TEMPLATE, not by model name: one file
+        # cannot serve them all, since x0/x1/c and amplitude are mutually
+        # exclusive key sets.
+        stem = (
+            sncosmo_prior_stem(args.sncosmo_model)
+            if args.model == SNCOSMO_MODEL
+            else args.model
+        )
+        default_prior = repo_root() / "priors_redback" / f"{stem}.prior"
         priors = default_prior if default_prior.exists() else None
 
     window = T0_WINDOW[args.model]
@@ -351,6 +386,8 @@ def resolve_config(args: argparse.Namespace) -> RunConfig:
         av_host_max=args.av_host_max,
         t0_min=window[0] if args.t0_min is None else args.t0_min,
         t0_max=window[1] if args.t0_max is None else args.t0_max,
+        sncosmo_model=args.sncosmo_model,
+        plot_theme=args.plot_theme,
         data_tmin=args.data_tmin,
         data_tmax=args.data_tmax,
         upper_limit_sigma=args.upper_limit_sigma,
@@ -416,7 +453,10 @@ def summarise(result, cfg: RunConfig, transient, priors) -> dict:
         else int(np.sum(np.asarray(detections, dtype=bool)))
     )
 
-    t0_posterior = posterior["t0"].to_numpy() if "t0" in posterior else None
+    # t0 for redback's forward models, peak_time for the sncosmo wrapper: both
+    # are the model's time origin in MJD, so they are summarised the same way.
+    time_key = time_parameter(cfg.model)
+    t0_posterior = posterior[time_key].to_numpy() if time_key in posterior else None
 
     return {
         "object": cfg.object_name,
@@ -498,7 +538,9 @@ def main() -> int:
     bilby.core.utils.random.seed(cfg.seed)
 
     rows = read_photometry(cfg.datafile)
-    reference_mjd = first_detection_mjd(rows)
+    # redback anchors t0 and every window on the first epoch, upper limits
+    # included (supernova.x[0] in its examples), not on the first detection.
+    reference_mjd = first_epoch_mjd(rows)
 
     transient = build_transient(
         rows,
@@ -508,28 +550,23 @@ def main() -> int:
         data_tmax=cfg.data_tmax,
     )
 
-    priors = build_priors(cfg, reference_mjd)
+    # The brightest detection centres the sncosmo peak_time prior, which is how
+    # redback's own example sets it: data_peak = sn.x[np.argmin(sn.y)].
+    priors = build_priors(cfg, reference_mjd, bands=transient.filtered_bands)
 
     outdir = cfg.outdir / cfg.model / cfg.object_name
     outdir.mkdir(parents=True, exist_ok=True)
     priors.to_file(outdir=str(outdir), label=f"{cfg.label}_effective")
 
-    from redback.utils import bands_to_frequency
-
-    # `bands` and `frequency` are per epoch: t0_base_model masks them with
-    # _mask_per_epoch_kwargs, so they must align with the data, not be unique.
-    model_kwargs = {
-        "output_format": "magnitude",
-        "bands": transient.filtered_bands,
-        "frequency": bands_to_frequency(list(transient.filtered_bands)),
-        "base_model": cfg.model,
-    }
-
     result = redback.fit_model(
         transient=transient,
         model=observed_model(cfg.model),
         prior=priors,
-        model_kwargs=model_kwargs,
+        model_kwargs=model_kwargs(
+            cfg.model,
+            transient.filtered_bands,
+            sncosmo_model=cfg.sncosmo_model,
+        ),
         sampler=cfg.sampler,
         nlive=cfg.nlive,
         outdir=str(outdir),
@@ -556,18 +593,27 @@ def main() -> int:
     summary_path.write_text(json.dumps(summary, indent=2, default=str))
     manifest_path = save_manifest(cfg, outdir)
 
-    drawn_t0 = result.posterior.get("t0")
-    if drawn_t0 is not None:
-        span = cfg.t0_max - cfg.t0_min
-        low, high = np.percentile(drawn_t0.to_numpy() - reference_mjd, [5, 95])
+    # Read the bounds off the prior that was actually sampled, not off cfg:
+    # the sncosmo path bounds peak_time on the brightest detection, not on
+    # --t0-min/--t0-max, so comparing against cfg silently tested nothing and
+    # the warning never fired where it was needed most.
+    time_key = time_parameter(cfg.model)
+    drawn_t0 = result.posterior.get(time_key)
+    prior = priors.get(time_key)
+    if drawn_t0 is not None and prior is not None:
+        edge_min = float(getattr(prior, "minimum", float("nan")))
+        edge_max = float(getattr(prior, "maximum", float("nan")))
+        span = edge_max - edge_min
+        low, high = np.percentile(drawn_t0.to_numpy(), [5, 95])
         for bound, value, edge in (
-            ("--t0-min", low, cfg.t0_min),
-            ("--t0-max", high, cfg.t0_max),
+            (f"the lower bound on {time_key}", low, edge_min),
+            (f"the upper bound on {time_key}", high, edge_max),
         ):
             if span > 0 and abs(value - edge) < 0.02 * span:
                 logger.warning(
-                    "t0 piles up against %s (%+.3f d): the window, not "
-                    "the data, is constraining t0. Widen it and refit.",
+                    "%s piles up against %s (%.5f MJD): the prior, not the "
+                    "data, is constraining it. Widen the window and refit.",
+                    time_key,
                     bound,
                     edge,
                 )
@@ -585,7 +631,9 @@ def main() -> int:
         "ln Z = %.2f +/- %.2f", summary["log_evidence"], summary["log_evidence_err"]
     )
     logger.info(
-        "t0 - first detection = %+.2f d", summary["t0_minus_first_detection_days"]
+        "%s - first detection = %+.2f d",
+        time_parameter(cfg.model),
+        summary["t0_minus_first_detection_days"],
     )
     logger.info("summary:  %s", summary_path)
     logger.info("manifest: %s", manifest_path)

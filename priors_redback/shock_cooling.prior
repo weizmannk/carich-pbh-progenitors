@@ -1,21 +1,11 @@
-# shock_cooling, Piro, Haynie & Yao (2021), ApJ 909, 209 (arXiv:2007.08543)
-#
-# Generated from redback.priors.get_priors('shock_cooling'), then nn and delta
-# pinned. Everything else is redback's bundled prior, unchanged.
-#
-# nn and delta are the outer and inner slopes of the broken power-law density
-# profile of the extended material. redback samples them; the paper does not.
-# It adopts "typical values ... n~10 and delta~1.1 (Chevalier & Soker 1989)"
-# and states that "the exact values of n and delta do not drastically alter
-# our results as long as n >> 1 and delta >~ 1". Sampling them therefore adds
-# two dimensions the likelihood barely constrains, which inflates the
-# uncertainty on the three parameters that matter (mass, radius, energy).
-# Pinned here, with the bundled bounds recorded for reference:
-#   nn    was Uniform(8, 12)
-#   delta was Uniform(1, 1.5)
+# shock_cooling, regenerated from redback.priors.get_priors('shock_cooling').
+# An exact copy of what redback ships: no key is overridden here.
+# Constraints are NOT in this file; redback_priors loads them with
+# get_priors(model, constraint=True) and this file only overrides keys.
+
 redshift = Uniform(minimum=0.001, maximum=3, name='redshift', latex_label='$z$', unit=None, boundary=None)
 log10_mass = Uniform(minimum=-2, maximum=3, name='log10_mass', latex_label='$\\log_{10}~m_{\\mathrm{en}}/M_\\odot$', unit=None, boundary=None)
 log10_radius = Uniform(minimum=10, maximum=14, name='log10_radius', latex_label='$\\log_{10}~R_{\\mathrm{en}}/{\\mathrm{cm}}$', unit=None, boundary=None)
 log10_energy = Uniform(minimum=40, maximum=52, name='log10_energy', latex_label='$\\log_{10}~E_{\\mathrm{en}}/{\\mathrm{erg}}$', unit=None, boundary=None)
-nn = DeltaFunction(peak=10, name='nn', latex_label='$n$', unit=None)
-delta = DeltaFunction(peak=1.1, name='delta', latex_label='$\\delta$', unit=None)
+nn = Uniform(minimum=8, maximum=12, name='nn', latex_label='$nn$', unit=None, boundary=None)
+delta = Uniform(minimum=1, maximum=1.5, name='delta', latex_label='$\\Delta$', unit=None, boundary=None)

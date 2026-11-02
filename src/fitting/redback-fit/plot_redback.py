@@ -1,22 +1,32 @@
 """Light-curve and corner figures for a redback fit.
 
-Follows the layout of ``plot_compare_models_public.py`` on the NMMA side: one
-column per band, a 3:1 main/residual split, tab10 for models and Dark2 for
-bands, dashed model curves over a shaded band, data as black-edged circles and
-non-detections as triangles. Plain matplotlib, no branding, so the two
-pipelines produce figures that can sit on the same page.
+The layout is the Astro-COLIBRI one: the constants, the per-band panel with its
+residual strip, the secondary MJD axis, the header and the vertical captions are
+those of ``nmma_api/plot_bestfit.py``, so a redback fit and an NMMA fit of the
+same target produce figures that read the same.
 
-One deliberate difference. The NMMA figure annotates a reduced chi-square in
-the legend, computed from the best-fit row it exports. Redback exports a
-posterior and an evidence, not a maximum-likelihood row, so the same number
-would have to be recomputed here from posterior draws and would not be the
-NMMA quantity despite carrying the same symbol. The residual panel shows the
-same information without that ambiguity.
+Only the palette is switchable, through ``--plot-theme``. ``print``, the
+default, is a plain figure for a paper. ``astrocolibri`` is the branded dark
+figure the app shows, with the logo, the slate ground and the filter colours the
+frontend uses, and matches the NMMA figure.
+
+Two deliberate differences from the NMMA figure, both because redback exports
+different things:
+
+The panel title carries no reduced chi-square. NMMA computes it from the
+best-fit row it exports; redback exports a posterior and an evidence, not a
+maximum-likelihood row, so the same symbol would stand for a different
+quantity. The residual strip shows the same information unambiguously.
+
+The shaded band is the 16-84 credible interval of the posterior draws, not a
+model curve widened by a fixed error budget. redback has no error-budget
+parameter, and the draws are the uncertainty it actually produces.
 """
 
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -26,7 +36,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import cm
+from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
 from redback_models import supports_extinction
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -34,15 +44,142 @@ if TYPE_CHECKING:  # pragma: no cover
 
 __all__ = ["lightcurve", "corner", "write_posterior_samples"]
 
-# Model curves, as in the NMMA public script.
-MODEL_COLORS = [cm.tab10(i) for i in range(10)]
+# Filters in the convention a journal figure uses: the colour tracks the
+# effective wavelength, blue to red, so a reader needs no legend to know which
+# panel is which.
+PRINT_BANDS = {
+    "atlas c": "#00868b",
+    "atlasc": "#00868b",
+    "atlas o": "#e8711a",
+    "atlaso": "#e8711a",
+    "asas-sn g": "#2e8b57",
+    "asas-sn v": "#6a5acd",
+    "ztf g": "#1b7837",
+    "ztfg": "#1b7837",
+    "g": "#1b7837",
+    "ztf r": "#c0392b",
+    "ztfr": "#c0392b",
+    "r": "#c0392b",
+    "ztf i": "#6d2c1f",
+    "ztfi": "#6d2c1f",
+    "i": "#6d2c1f",
+}
 
-# Photometry points, one colour per band.
-BAND_COLORS = [cm.Dark2(i) for i in range(8)]
+
+def _local_themes() -> dict:
+    """Palettes from an optional sibling module, absent from this repository.
+
+    The branded Astro-COLIBRI figure (slate ground, the frontend's filter
+    colours, the logo) lives in ``plot_astrocolibri.py``, which is not
+    versioned here: it carries another project's identity, so it is kept out
+    of the repository and out of a paper figure. When the file is present its
+    palettes join :data:`THEMES` and ``--plot-theme`` offers them; when it is
+    not, nothing changes and only ``print`` exists.
+    """
+    try:
+        from plot_astrocolibri import THEMES as extra
+    except ImportError:
+        return {}
+    return dict(extra)
+
+
+# The looks the figure can take. Same layout and same panels in every case;
+# only the palette changes.
+THEMES = {
+    "print": dict(
+        background="white",
+        foreground="black",
+        title="black",
+        model="#c2185b",
+        grid="0.75",
+        bands=PRINT_BANDS,
+        fallback=(0.35, 0.35, 0.35),
+        logo=None,
+        url=None,
+    ),
+    **_local_themes(),
+}
+
+DEFAULT_THEME = "print"
+
+NICE_BAND_NAMES = {
+    "ztfg": "ZTF g-band",
+    "ztfr": "ZTF r-band",
+    "ztfi": "ZTF i-band",
+    "ztf_g": "ZTF g-band",
+    "ztf_r": "ZTF r-band",
+    "ztf_i": "ZTF i-band",
+    "atlasc": "ATLAS c-band",
+    "atlaso": "ATLAS o-band",
+    "atlas_c": "ATLAS c-band",
+    "atlas_o": "ATLAS o-band",
+    "lsstu": "LSST u-band",
+    "lsstg": "LSST g-band",
+    "lsstr": "LSST r-band",
+    "lssti": "LSST i-band",
+    "lsstz": "LSST z-band",
+    "lssty": "LSST y-band",
+    "asas-sn_g": "ASAS-SN g-band",
+    "asas-sn_v": "ASAS-SN V-band",
+    "aavso_vis.": "AAVSO visual",
+    "aavso_vis": "AAVSO visual",
+    "aavso_v": "AAVSO V-band",
+    "aavso_b": "AAVSO B-band",
+    "aavso_r": "AAVSO R-band",
+    "aavso_i": "AAVSO I-band",
+    "last_clear": "LAST clear",
+}
+
+# Layout, in inches. Edit here to resize the figure globally.
+LAYOUT = dict(
+    HDR_H=0.90,
+    MAIN_H=2.20,
+    RES_H=0.70,
+    H_SEP=1.2,
+    PNL_W=4.20,
+    W_SEP=0.95,
+    L_MAR=0.90,
+    B_MAR=0.60,
+    T_MAR=0.08,
+    LOGO_W=1.10,
+    LOGO_H=1.10,
+    FONT_COL_W=0.14,
+    GAP=0.05,
+)
 
 # Posterior draws behind the model band. Enough for a stable 16-84 interval
 # without the evaluation dominating the runtime of a short fit.
 N_DRAWS = 200
+
+
+def theme_for(name: str | None) -> dict:
+    """One of :data:`THEMES`, falling back to the default on an unknown name."""
+    return THEMES.get(name or DEFAULT_THEME, THEMES[DEFAULT_THEME])
+
+
+def colour_for_band(band: str, theme: dict):
+    """The figure colour for a filter name, in this theme's palette."""
+    return theme["bands"].get(band.strip().lower(), theme["fallback"])
+
+
+def nice_band_name(band: str) -> str:
+    """A human-readable name for a filter code, or the code itself."""
+    if not band:
+        return ""
+    return NICE_BAND_NAMES.get(band.strip().lower(), band)
+
+
+def _style(figure, ax, theme: dict, title=None) -> None:
+    """Apply one theme to one axis."""
+    ax.set_facecolor(theme["background"])
+    figure.patch.set_facecolor(theme["background"])
+    for side in ("bottom", "top", "right", "left"):
+        ax.spines[side].set_color(theme["foreground"])
+    ax.tick_params(which="both", axis="both", colors=theme["foreground"])
+    ax.yaxis.label.set_color(theme["foreground"])
+    ax.xaxis.label.set_color(theme["foreground"])
+    if title is not None:
+        ax.set_title(title, color=theme["title"], pad=15)
 
 
 def write_posterior_samples(result, label: str, outdir: Path) -> Path:
@@ -63,7 +200,7 @@ def write_posterior_samples(result, label: str, outdir: Path) -> Path:
     return path
 
 
-def _model_draws(result, model_name: str, times_mjd, bands):
+def _model_draws(result, model_name: str, times_mjd, bands, sncosmo_model=None):
     """Model magnitudes for ``N_DRAWS`` posterior samples.
 
     Evaluates the same callable the fit used, ``observed_model(model_name)``,
@@ -89,8 +226,15 @@ def _model_draws(result, model_name: str, times_mjd, bands):
         Shape ``(n_draws, len(times_mjd))``, or None when the model cannot be
         evaluated. The caller then plots data only rather than failing.
     """
-    from redback.utils import bands_to_frequency
-    from redback_models import observed_model, sampled, supports_extinction
+    from redback_models import (
+        SNCOSMO_MODEL,
+        model_kwargs,
+        observed_model,
+        sampled,
+        sncosmo_keys,
+        supports_extinction,
+        time_parameter,
+    )
 
     times_mjd = np.asarray(times_mjd, dtype=float)
     if times_mjd.size and np.any(np.diff(times_mjd) < 0):
@@ -105,15 +249,18 @@ def _model_draws(result, model_name: str, times_mjd, bands):
         # its wrapper takes. The posterior also carries log_likelihood,
         # log_prior and the Constraint by-products, which are not model
         # arguments and would raise.
-        wanted = set(sampled(model_name)) | {"t0"}
+        # sampled() can only report the template-independent keys for the
+        # sncosmo path, so the source parameter (amplitude, or x0/x1/c) has to
+        # come from sncosmo_keys. Filtering on sampled() alone dropped it and
+        # the model call raised KeyError, leaving the figure with data but no
+        # model curve, warned about and otherwise silent.
+        if model_name == SNCOSMO_MODEL:
+            wanted = set(sncosmo_keys(sncosmo_model))
+        else:
+            wanted = set(sampled(model_name)) | {time_parameter(model_name)}
         if supports_extinction(model_name):
             wanted |= {"av_mw", "av_host"}
-        kwargs = {
-            "output_format": "magnitude",
-            "base_model": model_name,
-            "bands": bands,
-            "frequency": bands_to_frequency(list(bands)),
-        }
+        kwargs = model_kwargs(model_name, bands, sncosmo_model=sncosmo_model)
         curves = [
             np.asarray(
                 function(
@@ -164,7 +311,12 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
     errors = np.asarray(transient.y_err, dtype=float)
     bands = np.asarray(transient.bands)
 
-    t0_samples = result.posterior["t0"].to_numpy() if "t0" in result.posterior else None
+    from redback_models import time_parameter
+
+    time_key = time_parameter(cfg.model)
+    t0_samples = (
+        result.posterior[time_key].to_numpy() if time_key in result.posterior else None
+    )
 
     # `detections` is None, not an array, when every row is a detection:
     # redback sets the mask only when at least one row is an upper limit.
@@ -179,27 +331,133 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
     if not unique_bands:
         return None
 
-    ncol = len(unique_bands) if len(unique_bands) <= 3 else 2
-    nrow = int(np.ceil(len(unique_bands) / ncol))
-    figure, axes = plt.subplots(
-        nrow * 2,
-        ncol,
-        figsize=(5 * ncol, 4 * nrow),
-        sharex="col",
-        gridspec_kw={"height_ratios": [3, 1] * nrow},
+    theme = theme_for(getattr(cfg, "plot_theme", None))
+    layout = LAYOUT
+    n_bands = len(unique_bands)
+    ncol = n_bands if n_bands <= 3 else (2 if n_bands == 4 else 3)
+    nrow = int(np.ceil(n_bands / ncol))
+
+    row_height = layout["MAIN_H"] + layout["RES_H"]
+    right_margin = layout["LOGO_W"] + layout["FONT_COL_W"] * 2 - 7 * layout["GAP"]
+    fig_w = (
+        layout["L_MAR"]
+        + ncol * layout["PNL_W"]
+        + (ncol - 1) * layout["W_SEP"]
+        + right_margin
     )
-    axes = np.atleast_2d(axes)
-    subtitle = [cfg.model]
-    if cfg.kappa is not None:
-        subtitle.append(rf"$\kappa = {cfg.kappa:g}$")
-    if cfg.ebv_mw and supports_extinction(cfg.model):
-        subtitle.append(rf"$A_V^{{\rm MW}} \leq {3.1 * cfg.ebv_mw:.3f}$")
-    figure.suptitle(
-        f"{cfg.object_name.replace('_', ' ')}: " + ", ".join(subtitle),
-        fontsize=13,
+    fig_h = (
+        layout["T_MAR"]
+        + layout["HDR_H"]
+        + nrow * row_height
+        + (nrow - 1) * layout["H_SEP"]
+        + layout["B_MAR"]
     )
 
-    model_colour = MODEL_COLORS[0]
+    figure = plt.figure(figsize=(fig_w, fig_h))
+    figure.patch.set_facecolor(theme["background"])
+
+    panels_height = nrow * row_height + (nrow - 1) * layout["H_SEP"]
+    gs_outer = GridSpec(
+        2,
+        1,
+        figure=figure,
+        left=layout["L_MAR"] / fig_w,
+        right=1.0 - right_margin / fig_w,
+        bottom=layout["B_MAR"] / fig_h,
+        top=1.0 - layout["T_MAR"] / fig_h,
+        hspace=0.0,
+        height_ratios=[layout["HDR_H"], panels_height],
+    )
+
+    header = figure.add_subplot(gs_outer[0])
+    header.set_facecolor(theme["background"])
+    header.set_navigate(False)
+    for spine in header.spines.values():
+        spine.set_visible(False)
+    header.set_xticks([])
+    header.set_yticks([])
+
+    logo_w = layout["LOGO_W"] / fig_w
+    logo_h = layout["LOGO_H"] / fig_h
+    logo_x = (fig_w - layout["GAP"] - layout["LOGO_W"]) / fig_w
+    logo_y = (fig_h - layout["T_MAR"] - layout["LOGO_H"] - layout["GAP"]) / fig_h
+    logo = theme.get("logo")
+    if logo and Path(logo).is_file():
+        ax_logo = figure.add_axes([logo_x, logo_y, logo_w, logo_h])
+        ax_logo.imshow(plt.imread(logo))
+        ax_logo.axis("off")
+    if theme.get("url"):
+        figure.text(
+            logo_x + logo_w - layout["GAP"] / 3,
+            logo_y + logo_h,
+            theme["url"],
+            ha="right",
+            va="top",
+            fontsize=8,
+            color=theme["foreground"],
+            transform=figure.transFigure,
+        )
+
+    header.text(
+        0.5,
+        logo_y + logo_h - 0.08,
+        cfg.object_name.replace("_", " "),
+        ha="center",
+        va="center",
+        fontsize=13,
+        color=theme["title"],
+        fontweight="bold",
+        transform=header.transAxes,
+    )
+
+    # Vertical captions down the right margin, as on the NMMA figure.
+    created_x = logo_y + logo_h
+    figure.text(
+        created_x,
+        0.5,
+        datetime.now(timezone.utc).strftime("created on %Y-%m-%d %H:%M UTC"),
+        ha="center",
+        va="center",
+        fontsize=8,
+        color=theme["foreground"],
+        rotation=90,
+        transform=figure.transFigure,
+    )
+
+    caption = [f"Model: {cfg.model}"]
+    if cfg.model == "sncosmo_models":
+        caption.append(cfg.sncosmo_model)
+    if cfg.kappa is not None:
+        caption.append(rf"$\kappa = {cfg.kappa:g}$")
+    if cfg.ebv_mw and supports_extinction(cfg.model):
+        caption.append(rf"$A_V^{{\rm MW}} \leq {3.1 * cfg.ebv_mw:.3f}$")
+    figure.text(
+        created_x - layout["GAP"] / fig_w - layout["FONT_COL_W"] / fig_w,
+        0.5,
+        "   ".join(caption),
+        ha="center",
+        va="center",
+        fontsize=8,
+        color=theme["foreground"],
+        rotation=90,
+        transform=figure.transFigure,
+    )
+
+    gs_panels = GridSpecFromSubplotSpec(
+        nrow,
+        ncol,
+        subplot_spec=gs_outer[1],
+        wspace=layout["W_SEP"] / layout["PNL_W"],
+        hspace=layout["H_SEP"] / row_height,
+    )
+
+    # Blank any unused cell (three bands in a 2x2 layout, say).
+    for index in range(n_bands, nrow * ncol):
+        row, column = divmod(index, ncol)
+        empty = figure.add_subplot(gs_panels[row, column])
+        empty.set_facecolor(theme["background"])
+        empty.axis("off")
+
     # Start the model grid at the earliest sampled explosion time, so the rise
     # implied by the posterior is visible rather than cropped at the first
     # datum. t0_base_model returns 1000 mag before t0, which the y limits clip.
@@ -209,9 +467,33 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
 
     for index, band in enumerate(unique_bands):
         row, column = divmod(index, ncol)
-        main = axes[2 * row, column]
-        residual = axes[2 * row + 1, column]
-        band_colour = BAND_COLORS[index % len(BAND_COLORS)]
+        gs_cell = GridSpecFromSubplotSpec(
+            2,
+            1,
+            subplot_spec=gs_panels[row, column],
+            hspace=0.15,
+            height_ratios=[layout["MAIN_H"], layout["RES_H"]],
+        )
+        main = figure.add_subplot(gs_cell[0])
+        residual = figure.add_subplot(gs_cell[1], sharex=main)
+        _style(figure, main, theme)
+        _style(figure, residual, theme)
+        plt.setp(main.get_xticklabels(), visible=False)
+
+        # Secondary MJD axis on top, so a reader can go back to the alert.
+        mjd_axis = main.secondary_xaxis(
+            "top",
+            functions=(
+                lambda days, ref=reference: days + ref,
+                lambda mjd, ref=reference: mjd - ref,
+            ),
+        )
+        mjd_axis.set_xlabel("MJD", color=theme["foreground"], labelpad=4, fontsize=8)
+        mjd_axis.tick_params(axis="x", colors=theme["foreground"], labelsize=7)
+        mjd_axis.spines["top"].set_color(theme["foreground"])
+
+        model_colour = theme["model"]
+        band_colour = colour_for_band(band, theme)
         in_band = bands == band
 
         draws = _model_draws(
@@ -219,6 +501,7 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
             cfg.model,
             model_times_mjd,
             [band] * model_times_mjd.size,
+            getattr(cfg, "sncosmo_model", None),
         )
         if draws is not None:
             low, median, high = np.percentile(draws, [16, 50, 84], axis=0)
@@ -231,16 +514,21 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
                 label=cfg.model,
             )
             main.fill_between(
-                model_phase, low, high, facecolor=model_colour, alpha=0.15
+                model_phase,
+                low,
+                high,
+                facecolor=model_colour,
+                alpha=0.2,
+                label="68% credible",
             )
 
         if t0_samples is not None:
             main.axvline(
                 float(np.median(t0_samples)) - reference,
                 linestyle=":",
-                color="gray",
+                color=theme["grid"],
                 linewidth=1.2,
-                label=r"$t_0$ (median)",
+                label=rf"${time_key}$ (median)".replace("_", r"\_"),
             )
 
         seen = in_band & detected
@@ -250,10 +538,9 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
             errors[seen],
             fmt="o",
             color=band_colour,
-            ms=6,
-            markeredgecolor="black",
+            ms=4,
             elinewidth=1.2,
-            zorder=10,
+            zorder=5,
         )
         limits = in_band & ~detected
         if limits.any():
@@ -262,23 +549,26 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
                 magnitudes[limits],
                 marker="v",
                 color=band_colour,
-                s=45,
-                edgecolors="black",
-                zorder=10,
+                s=20,
+                zorder=5,
             )
 
         at_data = _model_draws(
-            result, cfg.model, times_mjd[seen], [band] * int(seen.sum())
+            result,
+            cfg.model,
+            times_mjd[seen],
+            [band] * int(seen.sum()),
+            getattr(cfg, "sncosmo_model", None),
         )
         if at_data is not None and seen.any():
             median_at_data = np.median(at_data, axis=0)
             residual.scatter(
                 phase[seen],
                 (magnitudes[seen] - median_at_data) / errors[seen],
-                color=model_colour,
+                color=band_colour,
                 s=20,
             )
-        residual.axhline(0, linestyle="--", color="gray", linewidth=1)
+        residual.axhline(0, linestyle="--", color=theme["grid"], linewidth=1)
 
         # Set the limits from the photometry before inverting: t0_base_model
         # returns 1000 mag before t0, and autoscaling on that would compress
@@ -293,24 +583,34 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
                 float(np.nanmin(in_panel)) - margin, float(np.nanmax(in_panel)) + margin
             )
         main.invert_yaxis()
-        main.set_title(band)
-        main.set_ylabel("AB magnitude")
-        main.legend(fontsize=8, loc="best")
-        residual.set_ylabel(r"$\Delta\,(\sigma)$")
-        # Only the bottom row carries the x label: with two rows of bands it
-        # would otherwise land on the panel title underneath.
-        if row == nrow - 1:
-            residual.set_xlabel("Days since first detection")
 
-    # Blank any unused cell (three bands in a 2x2 layout, say).
-    for index in range(len(unique_bands), nrow * ncol):
-        row, column = divmod(index, ncol)
-        axes[2 * row, column].axis("off")
-        axes[2 * row + 1, column].axis("off")
+        # The band name alone. NMMA appends a reduced chi-square computed from
+        # the best-fit row it exports; redback exports a posterior, not a
+        # maximum-likelihood row, so that number is not available here and the
+        # residual strip below carries the same information.
+        _style(figure, main, theme, title=nice_band_name(band))
+        _style(figure, residual, theme)
+        main.set_ylabel("AB magnitude", fontsize=8)
+        legend = main.legend(
+            fontsize=7,
+            loc="best",
+            facecolor=theme["background"],
+            edgecolor=theme["foreground"],
+        )
+        for text in legend.get_texts():
+            text.set_color(theme["foreground"])
+        residual.set_ylabel(r"$\Delta\,(\sigma)$", fontsize=7)
+        if row == nrow - 1:
+            residual.set_xlabel(
+                "Time since first detection [days]",
+                fontsize=8,
+                color=theme["foreground"],
+            )
+        else:
+            plt.setp(residual.get_xticklabels(), visible=False)
 
     path = outdir / f"{cfg.label}_lightcurve.pdf"
     path.parent.mkdir(parents=True, exist_ok=True)
-    figure.tight_layout(rect=(0, 0, 1, 0.97))
     figure.savefig(path, dpi=150, bbox_inches="tight")
     figure.savefig(path.with_suffix(".png"), dpi=150, bbox_inches="tight")
     plt.close(figure)
@@ -337,7 +637,11 @@ def physical_posterior_columns(posterior) -> list[str]:
         values = posterior[column].to_numpy()
         if not np.issubdtype(values.dtype, np.number):
             continue
-        if np.allclose(values, values[0]):
+        # Exactly constant, which is what a DeltaFunction produces. NOT
+        # np.allclose: its atol of 1e-8 calls any small-magnitude parameter
+        # constant, and an sncosmo amplitude of 3e-13 varying by 1.3e-14 was
+        # dropped as frozen, which left the corner plot with nothing to draw.
+        if values.size and np.ptp(values) == 0.0:
             continue
         columns.append(column)
     return columns

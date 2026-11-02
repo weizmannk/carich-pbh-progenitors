@@ -125,12 +125,32 @@ def read_photometry(datafile: Path) -> list[dict]:
     return rows
 
 
-def first_detection_mjd(rows: list[dict]) -> float:
-    """MJD of the earliest detection.
+def first_epoch_mjd(rows: list[dict]) -> float:
+    """MJD of the earliest epoch, upper limits included.
 
-    The reference epoch for every time window and for the ``t0`` prior: unlike
-    a derived explosion time it is a datum, not an inference, so a prior
-    centred on it does not smuggle in an assumption about the rise.
+    The anchor redback's own examples use for the ``t0`` prior and for any
+    window on the data::
+
+        priors['t0'] = Uniform(supernova.x[0] - 10, supernova.x[0] - 0.05)
+        priors['t0'] = Uniform(sn.x[0] - 100, sn.x[0] - 0.01)
+
+    ``x[0]`` is the first row of the transient, which with
+    ``use_phase_model=True`` is the smallest MJD in the file, detection or not.
+    On SN2021ugl that is 3.99 days earlier than the first detection, which with
+    a three-day t0 window is the difference between two disjoint priors.
+    """
+    return min(float(row["mjd"]) for row in rows)
+
+
+def first_detection_mjd(rows: list[dict]) -> float:
+    """MJD of the earliest detection. For display only.
+
+    Not an anchor for anything the fit computes. redback's own examples anchor
+    every time window and the ``t0`` prior on the first *epoch*,
+    ``supernova.x[0]`` / ``sn.x[0]``, which includes the pre-detection upper
+    limits; see :func:`first_epoch_mjd`. This is kept because the figures label
+    their x axis in days since the first detection, which is what a reader
+    interprets, and because the run summary records it.
 
     Raises
     ------
@@ -147,7 +167,7 @@ def build_transient(
     rows: list[dict],
     name: str,
     *,
-    upper_limit_sigma: float = 5.0,
+    upper_limit_sigma: float = 3.0,
     data_tmin: float | None = None,
     data_tmax: float | None = None,
 ):
@@ -162,15 +182,18 @@ def build_transient(
     name : str
         Object identifier, used as the transient's name.
     upper_limit_sigma : float, optional
-        The sigma level of the non-detections, which is redback's own meaning
-        for this parameter. It sets the width of the survival term:
-        ``sigma_UL = (2.5 / ln 10) / upper_limit_sigma``. The default of 5
-        matches the ATLAS 5-sigma limiting magnitudes the ingest step writes
-        (service paper, section 3); redback's own default of 3 would describe
-        data this pipeline does not have. It matters: a model exceeding a limit
-        by 1 mag is penalised -5.9 at sigma level 3 and -13.1 at 5.
+        The sigma level of the non-detections. It sets the width of the
+        survival term: ``sigma_UL = (2.5 / ln 10) / upper_limit_sigma``.
+        Default 3.0, which is redback's. It matters, a model exceeding a limit
+        by 1 mag is penalised -5.9 at sigma level 3 and -13.1 at 5, so it is
+        not a value to guess: this file format records no sigma level, and the
+        limits in it come from more than one survey (16 ATLAS and 7 ZTF on
+        SN2021ugl), which have no reason to share a convention. redback accepts
+        an array here, so a per-epoch level is the right answer once the
+        provenance is known.
     data_tmin, data_tmax : float, optional
-        Window in days **relative to the first detection**. ``data_tmin`` may
+        Window in days **relative to the first epoch**, the anchor redback's
+        own examples use. ``data_tmin`` may
         be negative to keep the pre-explosion limits, which are what constrain
         ``t0``. None keeps everything on that side.
 
@@ -206,7 +229,9 @@ def build_transient(
     # then falls back to a detections-only GaussianLikelihood, dropping every
     # limit. Nothing is re-checked here.
 
-    reference = first_detection_mjd(rows)
+    # redback's anchor: the first epoch, upper limits included
+    # (supernova.x[0] in its examples), not the first detection.
+    reference = first_epoch_mjd(rows)
     phase = mjd - reference
 
     keep = np.ones(len(rows), dtype=bool)
@@ -268,7 +293,8 @@ def build_transient(
         detections=None if detected.all() else detected,
         upper_limit_sigma=upper_limit_sigma,
     )
-    transient.first_detection_mjd = reference
+    transient.first_epoch_mjd = reference
+    transient.first_detection_mjd = first_detection_mjd(rows)
     logger.info(
         "%s: %d points (%d detections, %d limits) in %d bands, "
         "first detection MJD %.5f",

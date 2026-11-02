@@ -30,7 +30,7 @@ import redback_priors  # noqa: E402
 CONSTRAINED_MODELS = ("slsn", "tde_analytical", "cooling_envelope")
 DATAFILE = REPO_ROOT / "data" / "processed" / "SN2021ugl.dat"
 PRIOR_DIR = REPO_ROOT / "priors_redback"
-REFERENCE_MJD = rd.first_detection_mjd(rd.read_photometry(DATAFILE))
+REFERENCE_MJD = rd.first_epoch_mjd(rd.read_photometry(DATAFILE))
 
 
 @pytest.fixture(autouse=True)
@@ -76,9 +76,11 @@ def _config(**overrides):
         av_host_max=1.0,
         t0_min=-150.0,
         t0_max=0.0,
+        sncosmo_model="v19-1993j-corr",
+        plot_theme="print",
         data_tmin=None,
         data_tmax=None,
-        upper_limit_sigma=5.0,
+        upper_limit_sigma=3.0,
         nlive=100,
         sampler="dynesty",
         no_constraint=False,
@@ -93,7 +95,13 @@ def _config(**overrides):
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("model", list(rm.MODELS))
+# sncosmo_models reaches t0_base_model like the rest, but redback ships it no
+# prior and no metadata, so the tests that read get_priors(model) or assert a
+# shipped prior file are parametrised over the others.
+FORWARD_MODELS = tuple(m for m in rm.MODELS if m != rm.SNCOSMO_MODEL)
+
+
+@pytest.mark.parametrize("model", list(FORWARD_MODELS))
 def test_t0_wrapper_pre_explosion(model):
     """1000 mag before t0, finite after, for every catalogued model."""
     from redback.priors import get_priors
@@ -138,13 +146,13 @@ def test_unsorted_times_rejected(rows):
     """t0_base_model concatenates pre/post t0, so unsorted input must raise."""
     swapped = [rows[5], rows[0]] + list(rows[1:5]) + list(rows[6:])
     with pytest.raises(ValueError, match="not sorted"):
-        rd.build_transient(swapped, "X", upper_limit_sigma=5.0)
+        rd.build_transient(swapped, "X", upper_limit_sigma=3.0)
 
 
 def test_no_detection_rejected(rows):
     limits_only = [{**row, "detected": False} for row in rows]
     with pytest.raises(ValueError, match="no detection"):
-        rd.build_transient(limits_only, "X", upper_limit_sigma=5.0)
+        rd.build_transient(limits_only, "X", upper_limit_sigma=3.0)
 
 
 def test_measured_errors_pass_through_untouched(rows):
@@ -155,7 +163,7 @@ def test_measured_errors_pass_through_untouched(rows):
     (0.043 mag) outweighs the worst (0.207) by 23x on the measured errors, but
     only 1.6x once a 0.25 mag floor dominates both.
     """
-    transient = rd.build_transient(rows, "SN2021ugl", upper_limit_sigma=5.0)
+    transient = rd.build_transient(rows, "SN2021ugl", upper_limit_sigma=3.0)
     detections = np.asarray(transient.detections, dtype=bool)
     errors = np.asarray(transient.y_err, dtype=float)
 
@@ -172,7 +180,7 @@ def test_measured_errors_pass_through_untouched(rows):
 
 def test_redback_keeps_the_upper_limit_likelihood(rows):
     """What the guard above protects: the limits survive into the likelihood."""
-    transient = rd.build_transient(rows, "SN2021ugl", upper_limit_sigma=5.0)
+    transient = rd.build_transient(rows, "SN2021ugl", upper_limit_sigma=3.0)
     _, _, y, _, detections = transient.get_filtered_data_with_limits()
 
     assert detections is not None
@@ -192,31 +200,57 @@ def test_upper_limit_sigma_is_the_sigma_level(rows):
     the parameter now means what redback says it means, and the value is a
     property of the data: the ingest step writes ATLAS 5-sigma limits.
     """
-    transient = rd.build_transient(rows, "SN2021ugl", upper_limit_sigma=5.0)
-    assert transient.upper_limit_sigma == 5.0
+    transient = rd.build_transient(rows, "SN2021ugl", upper_limit_sigma=3.0)
+    assert transient.upper_limit_sigma == 3.0
     assert transient.has_upper_limits
     # The survival width redback derives from it.
     survival_width = (2.5 / np.log(10.0)) / transient.upper_limit_sigma
-    assert survival_width == pytest.approx(0.2171, abs=1e-4)
+    assert survival_width == pytest.approx(0.3619, abs=1e-4)
 
 
 def test_transient_is_on_mjd_scale(rows):
     """The likelihood reads `time_mjd`, so Transient.x must be MJD."""
-    transient = rd.build_transient(rows, "SN2021ugl", upper_limit_sigma=5.0)
+    transient = rd.build_transient(rows, "SN2021ugl", upper_limit_sigma=3.0)
     assert transient.x.min() > 50000.0, "x should be MJD, not a phase"
     assert np.all(np.diff(transient.x) >= 0)
     assert transient.first_detection_mjd == pytest.approx(rd.first_detection_mjd(rows))
 
 
-def test_data_window_relative_to_first_detection(rows):
-    """data_tmin may be negative, to keep the limits that constrain t0."""
-    reference = rd.first_detection_mjd(rows)
-    kept = rd.build_transient(rows, "X", upper_limit_sigma=5.0, data_tmin=0.0)
-    assert kept.x.min() >= reference
+def test_data_window_relative_to_the_first_epoch(rows):
+    """The window is anchored where redback anchors it: the first epoch.
 
-    with_limits = rd.build_transient(rows, "X", upper_limit_sigma=5.0, data_tmin=-10.0)
-    assert with_limits.x.min() < reference, "pre-detection limits should survive"
-    assert len(with_limits.x) > len(kept.x)
+    ``supernova.x[0]`` in redback's examples, upper limits included, not the
+    first detection. On SN2021ugl the two are 3.99 days apart, which with a
+    three-day t0 window is the difference between two disjoint priors.
+    """
+    epoch = rd.first_epoch_mjd(rows)
+    detection = rd.first_detection_mjd(rows)
+    assert epoch < detection, "this file has pre-detection limits, as expected"
+
+    kept = rd.build_transient(rows, "X", upper_limit_sigma=3.0, data_tmin=0.0)
+    assert kept.x.min() >= epoch
+    # Anchored on the epoch, data_tmin=0 keeps the pre-detection limits.
+    assert kept.x.min() < detection
+
+    trimmed = rd.build_transient(rows, "X", upper_limit_sigma=3.0, data_tmin=10.0)
+    assert trimmed.x.min() >= epoch + 10.0
+    assert len(trimmed.x) < len(kept.x)
+
+
+def test_first_detection_is_display_only(rows):
+    """It is recorded and plotted, never used to anchor the fit."""
+    import inspect
+
+    import fit_redback
+
+    transient = rd.build_transient(rows, "X", upper_limit_sigma=3.0)
+    assert transient.first_detection_mjd == pytest.approx(rd.first_detection_mjd(rows))
+    assert transient.first_epoch_mjd == pytest.approx(rd.first_epoch_mjd(rows))
+
+    # The runner must anchor on the epoch, not the detection.
+    source = inspect.getsource(fit_redback.main)
+    assert "first_epoch_mjd(rows)" in source
+    assert "first_detection_mjd(rows)" not in source
 
 
 # --------------------------------------------------------------------------
@@ -357,7 +391,7 @@ def test_unknown_prior_key(rows, tmp_path):
 
 def test_t0_prior_window(rows):
 
-    reference = rd.first_detection_mjd(rows)
+    reference = rd.first_epoch_mjd(rows)
     cfg = _config(model="arnett", t0_min=-30.0, t0_max=0.0)
     priors = redback_priors.build_priors(cfg, REFERENCE_MJD)
 
@@ -412,28 +446,36 @@ def test_check_against_redback_clean():
     assert rm.check_against_redback(prior_dir=PRIOR_DIR) == {}
 
 
-def test_shock_cooling_prior_pins_nn_delta():
-    """Piro, Haynie & Yao (2021): n ~ 10, delta ~ 1.1 (Chevalier & Soker 1989)."""
+def test_nothing_is_pinned_in_the_versioned_priors():
+    """Every file is an exact copy; nothing here narrows a redback prior.
+
+    nn and delta were pinned at the Piro, Haynie & Yao (2021) values for a
+    while, on the argument that the paper fixes them. The argument held, the
+    practice did not: a point prior where redback has Uniform(8, 12) and
+    Uniform(1, 1.5) removes two dimensions, which lowers that model's Occam
+    penalty and flatters its ln Z against any model fitted with its priors
+    intact. Pass --priors with your own file if you want that; the versioned
+    copies stay faithful.
+    """
     import bilby
 
-    priors = bilby.core.prior.PriorDict(str(PRIOR_DIR / "shock_cooling.prior"))
-    assert isinstance(priors["nn"], bilby.core.prior.DeltaFunction)
-    assert priors["nn"].peak == 10
-    assert isinstance(priors["delta"], bilby.core.prior.DeltaFunction)
-    assert priors["delta"].peak == 1.1
+    for model in FORWARD_MODELS:
+        priors = bilby.core.prior.PriorDict(str(PRIOR_DIR / f"{model}.prior"))
+        pinned = [
+            key
+            for key, prior in priors.items()
+            if isinstance(prior, bilby.core.prior.DeltaFunction)
+        ]
+        assert not pinned, f"{model}.prior pins {pinned}"
 
 
-#: Keys priors_redback deliberately pins where redback samples them, with the
-#: reason. Everything else must match redback exactly.
-DELIBERATE_OVERRIDES = {
-    ("shock_cooling", "nn"),
-    ("shock_cooling", "delta"),
-    ("shock_cooling_and_arnett", "nn"),
-    ("shock_cooling_and_arnett", "delta"),
-}
+# Keys priors_redback overrides on top of redback's. Empty on purpose: every
+# file is a faithful copy, and a narrowing belongs in a --priors file of your
+# own, not in the versioned ones.
+DELIBERATE_OVERRIDES: set = set()
 
 
-@pytest.mark.parametrize("model", list(rm.MODELS))
+@pytest.mark.parametrize("model", list(FORWARD_MODELS))
 def test_prior_files_match_redback(model):
     """Each versioned prior file must reproduce redback's, bar the pinned keys.
 
@@ -458,9 +500,6 @@ def test_prior_files_match_redback(model):
 
     for key in shipped:
         if (model, key) in DELIBERATE_OVERRIDES:
-            assert isinstance(versioned[key], bilby.core.prior.DeltaFunction), (
-                f"{key} is listed as a deliberate override but is not pinned"
-            )
             continue
         assert type(versioned[key]) is type(shipped[key]), key
         assert versioned[key].minimum == shipped[key].minimum, key
@@ -474,10 +513,264 @@ def test_prior_files_carry_provenance():
     These are copies of upstream data; an unlabelled copy is the thing a reader
     cannot tell from a hand-edited one.
     """
-    for model in rm.MODELS:
+    for model in FORWARD_MODELS:
         text = (PRIOR_DIR / f"{model}.prior").read_text()
         assert text.lstrip().startswith("#"), f"{model}.prior has no header"
         assert "get_priors" in text, f"{model}.prior does not name its source"
+
+    # Every file here is a copy of a redback prior. There is deliberately none
+    # for sncosmo_models: see test_sncosmo_has_no_prior_file_of_its_own.
+    assert not (PRIOR_DIR / f"{rm.SNCOSMO_MODEL}.prior").exists()
+
+
+def test_every_model_has_a_description():
+    """A model in MODELS with no description cannot be run at all.
+
+    fit_redback logs ``describe(cfg.model)`` before sampling, so a missing
+    entry is a KeyError two seconds into the run, not a cosmetic gap. Both
+    shock_cooling_and_arnett and sncosmo_models were added to MODELS without
+    one, and each aborted its first fit.
+    """
+    from model_descriptions import DESCRIPTIONS, describe
+
+    for model in rm.MODELS:
+        assert model in DESCRIPTIONS, f"{model} has no entry in DESCRIPTIONS"
+        entry = DESCRIPTIONS[model]
+        for field in ("label", "description", "derived", "reference", "caveat"):
+            assert entry.get(field), f"{model}: {field} is missing or empty"
+        # The call fit_redback actually makes, which also joins redback's
+        # live parameter list, so an unknown key would raise here too. For the
+        # sncosmo path that list is the template-independent part only.
+        assert describe(model)
+
+
+def test_model_type_fallback_names_a_real_redback_family():
+    """Every hand-written family must resolve to a wrapper redback has.
+
+    These two entries exist because redback ships no metadata for the models,
+    so nothing upstream validates them. A typo here does not raise: the
+    wrapper lookup simply misses, extinction_model returns None, and the model
+    silently loses its extinction. That is exactly what a stray space in
+    "supernova" once did to shock_cooling_and_arnett.
+    """
+    from redback.model_library import all_models_dict
+
+    for model, family in rm._MODEL_TYPE_FALLBACK.items():
+        assert family == family.strip(), f"{model}: {family!r} is not trimmed"
+        assert f"t0_{family}_extinction" in all_models_dict, (
+            f"{model}: redback has no t0_{family}_extinction"
+        )
+
+
+def test_every_model_resolves_its_extinction_or_says_why():
+    """No model may lose extinction by accident, only by a recorded decision."""
+    expected_without = set(rm._NO_EXTINCTION_WRAPPER) | {rm.SNCOSMO_MODEL}
+    for model in rm.MODELS:
+        if model in expected_without:
+            assert not rm.supports_extinction(model), model
+        else:
+            assert rm.supports_extinction(model), (
+                f"{model} lost its extinction wrapper; family is "
+                f"{rm.model_type(model)!r}"
+            )
+
+
+def test_sncosmo_is_called_directly():
+    """redback's example calls sncosmo_models itself, with no phase model.
+
+    "For SNCOSMO model fitting, this interface is slightly different ... we can
+    directly sample t0 without using a phase model."
+    """
+    from redback.model_library import all_models_dict
+
+    # Wrapped, so an out-of-range band rejects the sample instead of crashing,
+    # but it is redback's own function underneath.
+    assert (
+        rm.observed_model(rm.SNCOSMO_MODEL).__wrapped__
+        is all_models_dict[rm.SNCOSMO_MODEL]
+    )
+    assert not rm.supports_extinction(rm.SNCOSMO_MODEL)
+    assert rm.time_parameter(rm.SNCOSMO_MODEL) == "peak_time"
+    assert rm.time_parameter("arnett") == "t0"
+
+
+def test_sncosmo_ignores_t0_so_it_is_not_sampled():
+    """The measured reason t0 is left out, against redback's own example.
+
+    The example samples t0 alongside peak_time, but sncosmo_models never reads
+    it: its signature is (time, redshift, model_kwargs=None, **kwargs) and t0
+    lands in kwargs unused. Sampling it would be a flat direction, costing
+    prior volume for nothing. If a redback release starts reading t0, this
+    fails and the prior should gain it back.
+    """
+    from redback.transient_models.supernova_models import sncosmo_models
+
+    times = 55570.0 + np.linspace(1, 60, 6)
+    shared = dict(
+        sncosmo_model="salt2",
+        bands=["ztfr"] * times.size,
+        output_format="magnitude",
+        model_kwarg_names=["x0", "x1", "c"],
+        x0=1e-7,
+        x1=0.9,
+        c=0.3,
+        peak_time=55589.0,
+    )
+    a = np.asarray(sncosmo_models(time=times, redshift=0.1, t0=55560.0, **shared))
+    b = np.asarray(sncosmo_models(time=times, redshift=0.1, t0=55500.0, **shared))
+    assert np.allclose(a, b), "t0 now does something; sample it again"
+
+    moved = np.asarray(
+        sncosmo_models(
+            time=times, redshift=0.1, t0=55560.0, **{**shared, "peak_time": 55595.0}
+        )
+    )
+    assert not np.allclose(a, moved), "peak_time must move the light curve"
+
+
+def test_sncosmo_source_parameters_follow_the_template():
+    """Read from sncosmo, so any template --sncosmo-model takes is covered."""
+    assert rm.sncosmo_source_parameters("v19-1993j-corr") == ("amplitude",)
+    assert rm.sncosmo_source_parameters("salt2") == ("x0", "x1", "c")
+    # SALT3 is not a redback model at all, only reachable here, and takes the
+    # same three keys as SALT2, so salt2.prior's values apply to it.
+    assert rm.sncosmo_source_parameters("salt3") == ("x0", "x1", "c")
+
+
+def test_brightness_uses_the_route_redback_exercises():
+    """The source parameter is sampled; use_set_peak_magnitude stays off.
+
+    sncosmo_models also accepts ``use_set_peak_magnitude``, which would anchor
+    the brightness on a peak absolute magnitude and spare us priming a raw flux
+    normalisation. Nothing in redback ever sets it: the only occurrences in the
+    whole package are its own definition and two docstrings, the default is
+    False, and no example, notebook, test or prior file turns it on. So it is a
+    provision, not a practice, and this pipeline samples what redback's own
+    priors sample instead: x0/x1/c for SALT (priors/salt2.prior) and amplitude
+    for the rest (priors/sn1998bw_template.prior).
+    """
+    for template in ("salt3", "v19-1993j-corr", "nugent-sn2p"):
+        kwargs = rm.model_kwargs(rm.SNCOSMO_MODEL, ["ztfg"], sncosmo_model=template)
+        assert "use_set_peak_magnitude" not in kwargs, template
+        assert "peak_abs_mag" not in rm.sncosmo_keys(template), template
+        # Every source parameter the template has is declared to redback.
+        assert kwargs["model_kwarg_names"] == list(
+            rm.sncosmo_source_parameters(template)
+        )
+
+
+def test_model_kwargs_declare_the_source_parameters():
+    """model_kwarg_names is how redback learns which kwargs are parameters."""
+    kwargs = rm.model_kwargs(rm.SNCOSMO_MODEL, ["ztfg"], sncosmo_model="v19-1993j-corr")
+    assert kwargs["model_kwarg_names"] == ["amplitude"]
+    assert kwargs["sncosmo_model"] == "v19-1993j-corr"
+    # No phase wrapper, so no base_model.
+    assert "base_model" not in kwargs
+
+    salt = rm.model_kwargs(rm.SNCOSMO_MODEL, ["ztfg"], sncosmo_model="salt3")
+    assert salt["model_kwarg_names"] == ["x0", "x1", "c"]
+
+
+def test_sncosmo_priors_cover_exactly_the_templates_keys(rows):
+    """Every key the template needs is in the prior, and nothing else."""
+    reference = rd.first_epoch_mjd(rows)
+    low, high = rm.T0_WINDOW[rm.SNCOSMO_MODEL]
+    cfg = _config(model=rm.SNCOSMO_MODEL, z_known=0.0412, t0_min=low, t0_max=high)
+    priors = redback_priors.build_priors(cfg, reference)
+
+    assert set(priors) == set(rm.sncosmo_keys("v19-1993j-corr"))
+    # A fixed offset window, as for every other model, NOT +/- 10 d of the
+    # brightest detection: that recipe of redback's example assumes a
+    # single-peaked template, and on a double-peaked IIb it pins phase zero to
+    # the Ni peak and pushes the first 19 days outside the template (chi2 per
+    # detection 127.3 against 4.1).
+    assert priors["peak_time"].minimum == pytest.approx(reference + low)
+    assert priors["peak_time"].maximum == pytest.approx(reference + high)
+    # The raw normalisation, bracketing the amplitude of a real IIb at this z.
+    assert priors["amplitude"].minimum < 1e-13 < priors["amplitude"].maximum
+    assert "peak_abs_mag" not in priors
+
+
+def test_sncosmo_salt3_uses_redbacks_own_salt2_values(rows):
+    """SALT3 has no redback prior; salt2.prior's values are what it gets."""
+    reference = rd.first_epoch_mjd(rows)
+    priors = redback_priors.build_priors(
+        _config(model=rm.SNCOSMO_MODEL, sncosmo_model="salt3"), reference
+    )
+
+    assert set(priors) == set(rm.sncosmo_keys("salt3"))
+    assert priors["x0"].minimum == 1e-10 and priors["x0"].maximum == 1e-1
+    assert priors["x1"].mu == 0 and priors["x1"].sigma == 1
+    assert priors["c"].mu == 0 and priors["c"].sigma == 0.1
+
+
+def test_sncosmo_model_evaluates_through_the_pipelines_own_call(rows):
+    """The fit's own callable and kwargs must drive the template."""
+    reference = rd.first_epoch_mjd(rows)
+    times = reference + np.array([0.0, 5.0, 12.0, 25.0])
+    bands = ["ztfg"] * times.size
+
+    function = rm.observed_model(rm.SNCOSMO_MODEL)
+    kwargs = rm.model_kwargs(rm.SNCOSMO_MODEL, bands, sncosmo_model="v19-1993j-corr")
+
+    def magnitudes(amplitude):
+        return np.asarray(
+            function(
+                times,
+                redshift=0.0412,
+                peak_time=reference + 18.0,
+                amplitude=amplitude,
+                ebv=0.0,
+                **kwargs,
+            )
+        )
+
+    mags = magnitudes(8e-14)
+    assert mags.shape == times.shape
+    assert np.all(np.isfinite(mags))
+    # A IIb at z = 0.04 sits near 17-20 mag, not at 0 or 40.
+    assert mags.min() < 22.0, mags
+
+    # A larger amplitude must give brighter magnitudes: the parameter is read.
+    brighter = magnitudes(8e-13)
+    assert brighter.min() < mags.min() - 1.0
+
+
+def test_sncosmo_host_extinction_follows_the_av_host_flag(rows):
+    """ebv is the host E(B-V), so --sample-av-host is what drives it."""
+    import bilby
+
+    reference = rd.first_epoch_mjd(rows)
+
+    pinned = redback_priors.build_priors(
+        _config(model=rm.SNCOSMO_MODEL, sample_av_host=False), reference
+    )
+    assert isinstance(pinned["ebv"], bilby.core.prior.DeltaFunction)
+    assert pinned["ebv"].peak == 0.0
+
+    sampled_host = redback_priors.build_priors(
+        _config(model=rm.SNCOSMO_MODEL, sample_av_host=True, av_host_max=1.0),
+        reference,
+    )
+    assert sampled_host["ebv"].maximum == pytest.approx(1.0 / redback_priors.R_V_MW)
+
+
+def test_supernova_t0_windows_follow_nmma(rows):
+    """The explosion-time windows must stay tight, as NMMA's Astro-COLIBRI are.
+
+    The first Astro-COLIBRI detection pins the epoch to about a day, so a
+    window of tens of days only lets the sampler wander. NMMA's own prior
+    files for these templates use Uniform(-2, +1).
+    """
+    for model in ("arnett", "shock_cooling", "shock_cooling_and_arnett"):
+        low, high = rm.T0_WINDOW[model]
+        assert (low, high) == (-2.0, 1.0), model
+
+    # The slow transients are deliberately left wide: their rise alone lasts
+    # weeks, so the explosion can genuinely predate the discovery by that much.
+    for model in ("slsn", "tde_analytical", "cooling_envelope"):
+        low, _ = rm.T0_WINDOW[model]
+        assert low <= -100.0, model
 
 
 def test_cooling_envelope_prior_keeps_the_upstream_constraint_note():
@@ -492,8 +785,133 @@ def test_cooling_envelope_prior_keeps_the_upstream_constraint_note():
 
 
 def test_every_model_has_a_prior_file():
-    for model in rm.MODELS:
+    for model in FORWARD_MODELS:
         assert (PRIOR_DIR / f"{model}.prior").exists(), model
+
+
+def test_effective_prior_can_be_read_back(tmp_path, rows):
+    """The record of a run must be replayable through --priors.
+
+    Every bound has to be a plain Python float: bilby serialises with repr(),
+    so a numpy scalar is written as "np.float64(0.33...)" and reading the file
+    back raises ModuleNotFoundError: No module named 'np'. That is what
+    sncosmo_max_redshift used to return, which made the effective prior of
+    every sncosmo run unreadable.
+    """
+    import bilby
+
+    reference = rd.first_epoch_mjd(rows)
+    priors = redback_priors.build_priors(
+        _config(model=rm.SNCOSMO_MODEL, z_known=None, t0_min=-10.0, t0_max=60.0),
+        reference,
+        bands=["ztfg", "ztfr", "atlasc", "atlaso"],
+    )
+
+    priors.to_file(outdir=str(tmp_path), label="roundtrip")
+    written = tmp_path / "roundtrip.prior"
+    assert "np.float64" not in written.read_text()
+
+    back = bilby.core.prior.PriorDict(str(written))
+    assert set(back) == set(priors)
+    assert back["redshift"].maximum == pytest.approx(priors["redshift"].maximum)
+
+
+def test_out_of_range_redshift_is_rejected_not_truncated():
+    """The prior keeps its declared range; the likelihood rejects what it must.
+
+    Past the redshift where a bandpass leaves the template's wavelength range,
+    sncosmo raises instead of returning NaN. Truncating the prior to dodge that
+    would remove prior volume and inflate ln Z by the log of the width removed,
+    which has nothing to do with the data, so the model returns an infinite
+    magnitude and the sample is rejected on its likelihood instead.
+    """
+    import numpy as np
+
+    function = rm.observed_model(rm.SNCOSMO_MODEL)
+    kwargs = rm.model_kwargs(
+        rm.SNCOSMO_MODEL, ["ztfg"] * 3, sncosmo_model="v19-1993j-corr"
+    )
+    times = np.array([59430.0, 59441.0, 59450.0])
+    shared = dict(peak_time=59441.0, amplitude=8e-14, ebv=0.0, **kwargs)
+
+    inside = np.asarray(function(times, redshift=0.2, **shared))
+    assert np.all(np.isfinite(inside))
+
+    # z = 2 puts ztfg off the blue end of the template.
+    outside = np.asarray(function(times, redshift=2.0, **shared))
+    assert np.all(np.isinf(outside)), outside
+
+    # And the prior itself is untouched: no truncation, so no free evidence.
+    priors = redback_priors.build_priors(
+        _config(model=rm.SNCOSMO_MODEL, z_known=None, t0_min=-30.0, t0_max=30.0),
+        59419.226,
+        bands=["ztfg", "ztfr", "atlasc", "atlaso"],
+    )
+    assert priors["redshift"].maximum == 3
+
+
+def test_sncosmo_prior_files_split_salt_from_the_rest():
+    """Two files, split on the source parameters, not one and not one each.
+
+    A single file cannot serve every template: x0/x1/c and amplitude are
+    mutually exclusive key sets, so a file carrying the SALT keys makes a v19
+    fit fail with "names keys ... does not have: ['c', 'x0', 'x1']". One file
+    per template would be five near-identical copies to keep in step. The split
+    is read off the template, not tabulated.
+    """
+    import bilby
+
+    assert not (PRIOR_DIR / f"{rm.SNCOSMO_MODEL}.prior").exists()
+    assert sorted(p.stem for p in PRIOR_DIR.glob("sncosmo_*.prior")) == [
+        "sncosmo_generic",
+        "sncosmo_salt",
+    ]
+
+    for template, stem in (
+        ("salt2", "sncosmo_salt"),
+        ("salt3", "sncosmo_salt"),
+        ("v19-1993j-corr", "sncosmo_generic"),
+        ("nugent-sn2p", "sncosmo_generic"),
+    ):
+        assert rm.sncosmo_prior_stem(template) == stem, template
+        keys = set(bilby.core.prior.PriorDict(str(PRIOR_DIR / f"{stem}.prior")))
+        known = set(rm.sncosmo_keys(template))
+        assert keys <= known, (
+            f"{stem}.prior names keys {template} lacks: {keys - known}"
+        )
+        # peak_time is an MJD and ebv follows --sample-av-host, so neither can
+        # be written down ahead of a run.
+        assert "peak_time" not in keys and "ebv" not in keys, stem
+
+
+def test_a_sncosmo_prior_file_wins_over_the_derived_amplitude(rows):
+    """A supplied file must not be silently overwritten.
+
+    The amplitude default is derived from the redshift prior in force, which is
+    tighter than anything a static file can be. That derivation used to run
+    unconditionally, after the file had been read, so the file's amplitude line
+    was dead and nothing said so.
+    """
+    import bilby
+
+    path = PRIOR_DIR / "sncosmo_generic.prior"
+    if not path.exists():
+        pytest.skip("no versioned prior for this template")
+    in_file = bilby.core.prior.PriorDict(str(path))["amplitude"]
+    reference = rd.first_epoch_mjd(rows)
+
+    supplied = redback_priors.build_priors(
+        _config(model=rm.SNCOSMO_MODEL, priors=path, t0_min=-10.0, t0_max=60.0),
+        reference,
+    )["amplitude"]
+    assert supplied.minimum == in_file.minimum
+    assert supplied.maximum == in_file.maximum
+
+    derived = redback_priors.build_priors(
+        _config(model=rm.SNCOSMO_MODEL, priors=None, t0_min=-10.0, t0_max=60.0),
+        reference,
+    )["amplitude"]
+    assert derived.minimum != in_file.minimum
 
 
 def test_t0_window_covers_every_model():
@@ -513,7 +931,7 @@ def test_redshift_is_left_on_redbacks_own_prior_when_sampled(rows):
     """
     from redback.priors import get_priors
 
-    for model in rm.MODELS:
+    for model in FORWARD_MODELS:
         shipped = get_priors(model)["redshift"]
         cfg = _config(
             model=model,

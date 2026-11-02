@@ -45,6 +45,11 @@ PARAMETER_NOTES: dict[str, str] = {
     "t0": "explosion time, MJD (sampled; redback's own parameterisation)",
     "av_mw": "Milky Way V-band extinction, mag",
     "av_host": "host-galaxy V-band extinction, mag",
+    "peak_time_mjd": "epoch of the template's maximum light, MJD",
+    "x1": "SALT light-curve shape (stretch)",
+    "c": "SALT colour",
+    "peak_abs_mag": "peak absolute magnitude, AB, in standard::b",
+    "ebv": "host-galaxy E(B-V), mag",
 }
 
 DESCRIPTIONS: dict[str, dict] = {
@@ -108,6 +113,32 @@ DESCRIPTIONS: dict[str, dict] = {
             "BUILTIN_MODEL_METADATA for."
         ),
     },
+    "shock_cooling_and_arnett": {
+        "label": "SN - shock cooling + Arnett",
+        "description": (
+            "Both peaks of a stripped-envelope supernova in one model, the "
+            "shock-cooling emission of low-mass extended material summed with "
+            "the Ni-56 powered Arnett peak; the luminosities add, so the "
+            "early decline and the radioactive maximum are fitted jointly "
+            "rather than over separate time windows. The union of "
+            "shock_cooling's and arnett's parameters."
+        ),
+        "derived": ("M_Ni = f_nickel * mej", "t_d diffusion time", "L_bol", "R_ph"),
+        "reference": "Piro, Haynie & Yao 2021 + Arnett 1982",
+        "reference_url": "https://ui.adsabs.harvard.edu/abs/2021ApJ...909..209P",
+        "caveat": (
+            "The model for a Type IIb, whose first peak is shock cooling and "
+            "not nickel: fitting arnett alone to such a light curve drives t0 "
+            "against its lower bound and biases M_Ni. Twelve free parameters "
+            "against the five of arnett, so it needs the early epochs to be "
+            "covered or the shock-cooling half is unconstrained. redback ships "
+            "no BUILTIN_MODEL_METADATA for it, so its family comes from "
+            "_MODEL_TYPE_FALLBACK, and no constraint either: unlike arnett, "
+            "the Ni-56 burning energy is NOT checked against the kinetic "
+            "energy here. priors_redback pins nn and delta as it does for "
+            "shock_cooling."
+        ),
+    },
     "tde_analytical": {
         "label": "TDE - fallback powered",
         "description": (
@@ -128,6 +159,38 @@ DESCRIPTIONS: dict[str, dict] = {
             "kinetic energy, and the nebular phase must not begin before "
             "100 d. Its kappa prior runs to 100 cm^2/g, far wider than the "
             "other models' 2."
+        ),
+    },
+    "sncosmo_models": {
+        "label": "Template - sncosmo library",
+        "description": (
+            "Empirical spectral template, an observed supernova's own time "
+            "series of spectra, redshifted and integrated through the "
+            "bandpasses; no physics is assumed and nothing is derived, which "
+            "is what makes it the right choice when a spectral class is known "
+            "and a parametric model would be fitted outside its domain. The "
+            "template is chosen with --sncosmo-model, so this one entry covers "
+            "the whole sncosmo library."
+        ),
+        "derived": ("peak apparent magnitude per band", "rise and decline rate"),
+        "reference": "Guillochon et al. 2017, sncosmo",
+        "reference_url": "https://ui.adsabs.harvard.edu/abs/2017ApJ...835...64G",
+        "caveat": (
+            "No ejecta mass, no nickel mass, no explosion energy: a template "
+            "says what the light curve looks like, not what powered it, so "
+            "M_Ni is not available from this model. Two epochs are sampled, "
+            "t0 the explosion and peak_time_mjd maximum light, the second "
+            "reduced to days since the first by t0_base_model's own "
+            "peak_time_mjd branch. The template is valid only over its phase "
+            "range (-2.5 to 223 d rest frame for v19-1993j-corr), and its "
+            "brightness is set through peak_abs_mag rather than the raw "
+            "normalisation, whose meaning and scale differ per template. "
+            "A SALT template also brings x1 and c, on redback's own "
+            "salt2.prior values. Galactic extinction is NOT applied: redback "
+            "adds sncosmo's F99 effect after model.update() and never sets "
+            "mwebv, so it stays at 0; only the host CCM89 term is live, "
+            "through ebv. Its ln Z is therefore not comparable with the models "
+            "that sample av_mw."
         ),
     },
     "cooling_envelope": {
