@@ -1,0 +1,29 @@
+# cooling_envelope, redback 1.20.0's bundled prior, regenerated verbatim.
+#
+# Source: redback.priors.get_priors('cooling_envelope'), serialised with
+# PriorDict.to_file(). Distributions, bounds and latex labels are identical to
+# redback/priors/cooling_envelope.prior; only the written form differs (explicit keyword
+# arguments instead of positional). Checked by
+# tests/test_redback_pipeline.py::test_prior_files_match_redback.
+#
+# Versioned here so a bound can be changed deliberately, and so a redback upgrade
+# that moves one shows up as a test failure instead of silently changing a fit.
+#
+# Physical constraints are NOT in this file: they are Constraint priors attached
+# by get_priors(model, constraint=True) and added by fit_redback.build_priors.
+#
+# Preserved from redback's own cooling_envelope.prior:
+#   eta > eta_min(mbh_6, stellar_mass) and beta < beta_max(mbh_6, stellar_mass)
+#   must hold for physical solutions. These bounds depend on sampled parameter
+#   combinations, so pass constraint=True to get_priors() or fit_model() to have
+#   bilby reject invalid samples automatically.
+# fit_redback.build_priors does exactly that, and raises if the Constraint priors
+# turn out to be absent, attaching only a conversion function computes the
+# constraint and then ignores it.
+
+redshift = Uniform(minimum=1e-06, maximum=3, name='redshift', latex_label='$z$', unit=None, boundary=None)
+mbh_6 = LogUniform(minimum=0.1, maximum=10, name='mbh_6', latex_label='$M_{\\mathrm{BH}}~[10^{6}~M_{\\odot}]$', unit=None, boundary=None)
+stellar_mass = LogUniform(minimum=0.5, maximum=10, name='stellar_mass', latex_label='$M_{\\mathrm{star}}[M_{\\odot}]$', unit=None, boundary=None)
+eta = LogUniform(minimum=0.0001, maximum=0.1, name='eta', latex_label='$\\eta$', unit=None, boundary=None)
+alpha = LogUniform(minimum=0.1, maximum=1, name='alpha', latex_label='$\\alpha$', unit=None, boundary=None)
+beta = Uniform(minimum=1, maximum=5, name='beta', latex_label='$\\beta$', unit=None, boundary=None)

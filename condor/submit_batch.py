@@ -47,7 +47,7 @@ BACKEND_VENV = {
     "nmma": ".venv-nmma",
 }
 BACKEND_SCRIPT = {
-    "redback": "src/fitting/redback-fit/fit_nickel.py",
+    "redback": "src/fitting/redback-fit/fit_redback.py",
     "mosfit": "src/fitting/mosfit-fit/fit_mosfit.py",
     "nmma": "src/fitting/nmma-fit/fit_nmma.py",
 }
@@ -55,8 +55,9 @@ BACKEND_SCRIPT = {
 # fit-script's CLI args, one per line, for one object).
 BACKEND_CONDOR_ARGS_SCRIPT = {
     "nmma": "src/fitting/nmma-fit/condor_args.py",
-    # redback/mosfit: add once fit_nickel.py/fit_mosfit.py are past the
-    # NotImplementedError stub and their own condor_args.py exists.
+    "redback": "src/fitting/redback-fit/condor_args.py",
+    # mosfit: add once fit_mosfit.py is past the NotImplementedError stub and
+    # has its own condor_args.py.
 }
 
 

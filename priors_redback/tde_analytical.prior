@@ -1,0 +1,22 @@
+# tde_analytical, redback 1.20.0's bundled prior, regenerated verbatim.
+#
+# Source: redback.priors.get_priors('tde_analytical'), serialised with
+# PriorDict.to_file(). Distributions, bounds and latex labels are identical to
+# redback/priors/tde_analytical.prior; only the written form differs (explicit keyword
+# arguments instead of positional). Checked by
+# tests/test_redback_pipeline.py::test_prior_files_match_redback.
+#
+# Versioned here so a bound can be changed deliberately, and so a redback upgrade
+# that moves one shows up as a test failure instead of silently changing a fit.
+#
+# Physical constraints are NOT in this file: they are Constraint priors attached
+# by get_priors(model, constraint=True) and added by fit_redback.build_priors.
+
+redshift = Uniform(minimum=0.01, maximum=3, name='redshift', latex_label='$z$', unit=None, boundary=None)
+mej = LogUniform(minimum=0.1, maximum=100, name='mej', latex_label='$M_{\\mathrm{ej}}~(M_\\odot)$', unit=None, boundary=None)
+vej = LogUniform(minimum=1000.0, maximum=100000.0, name='vej', latex_label='$v_{\\mathrm{ej}}~(\\mathrm{km}/\\mathrm{s})$', unit=None, boundary=None)
+kappa = Uniform(minimum=0.05, maximum=100.0, name='kappa', latex_label='$\\kappa~(\\mathrm{cm}^{2}/\\mathrm{g})$', unit=None, boundary=None)
+kappa_gamma = LogUniform(minimum=0.0001, maximum=10000.0, name='kappa_gamma', latex_label='$\\kappa_{\\gamma}~(\\mathrm{cm}^{2}/\\mathrm{g})$', unit=None, boundary=None)
+temperature_floor = LogUniform(minimum=1000.0, maximum=10000.0, name='temperature_floor', latex_label='$T_{\\mathrm{floor}}~(\\mathrm{K})$', unit=None, boundary=None)
+l0 = LogUniform(minimum=1e+51, maximum=1e+60, name='l0', latex_label='$l_0$', unit=None, boundary=None)
+t_0_turn = LogUniform(minimum=0.0001, maximum=500.0, name='t_0_turn', latex_label='$t_{0t}$', unit=None, boundary=None)

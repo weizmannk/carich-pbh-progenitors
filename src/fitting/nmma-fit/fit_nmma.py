@@ -11,7 +11,7 @@ by --Ebv-max = raw SFD E(B-V) at (ra, dec) times the Schlafly & Finkbeiner
 (2011) recalibration factor (0.86), an upper bound rather than a fixed
 value, since host-galaxy reddening is unknown. SFD here, not the Planck GNILC map
 used for the actual MW dereddening in redback/mosfit
-(src/ingest/extinction.py): the SF2011 factor is specifically a correction
+(src/ingest/mw_extinction.py): the SF2011 factor is specifically a correction
 for SFD, and this is only a nuisance-parameter bound, not a measurement.
 --trigger-time is required in nmma-1.0 and is derived from the first ISOT
 timestamp in the .dat file.
@@ -44,7 +44,7 @@ matplotlib.use("Agg")
 from nmma_priors import configure_prior
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "ingest"))
-from extinction import EBV_SF2011, get_sfd_ebv
+from mw_extinction import EBV_SF2011, get_sfd_ebv
 from time_windows import em_window
 
 logger = logging.getLogger(__name__)
@@ -141,7 +141,7 @@ def parse_args() -> argparse.Namespace:
         dest="ebv_max",
         help="Pre-computed Ebv-max (SFD x SF2011). If given, skips the dustmaps query "
         "(useful if the run environment can't reach the network); if omitted, "
-        "computed here from --ra/--dec via extinction.get_sfd_ebv",
+        "computed here from --ra/--dec via mw_extinction.get_sfd_ebv",
     )
     parser.add_argument(
         "--local-plot",

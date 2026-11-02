@@ -3,6 +3,12 @@
 Shared across all fitting backends (nmma, redback, mosfit): the MW
 correction depends on the object's coordinates, not on the fitting tool.
 
+Named ``mw_extinction`` and not ``extinction`` on purpose: ``extinction`` is
+also a PyPI package (a direct dependency of redback, used by
+``redback_data.galactic_extinction`` for the Fitzpatrick law). Both would be
+importable as ``extinction`` once ``src/ingest`` is on ``sys.path``, and which
+one won would depend on path order.
+
 get_planck_ebv (Planck GNILC) is the actual MW dereddening value used by
 redback/mosfit. get_sfd_ebv (raw SFD98) is separate: nmma uses it only to
 bound the free Ebv nuisance parameter (--Ebv-max), scaled by the Schlafly

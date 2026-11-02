@@ -1,0 +1,34 @@
+# shock_cooling_and_arnett, redback 1.20.0's bundled prior, regenerated verbatim.
+#
+# Source: redback.priors.get_priors('shock_cooling_and_arnett'), serialised with
+# PriorDict.to_file(). Distributions, bounds and latex labels are identical to
+# redback/priors/shock_cooling_and_arnett.prior; only the written form differs (explicit keyword
+# arguments instead of positional). Checked by
+# tests/test_redback_pipeline.py::test_prior_files_match_redback.
+#
+# Versioned here so a bound can be changed deliberately, and so a redback upgrade
+# that moves one shows up as a test failure instead of silently changing a fit.
+#
+# Physical constraints are NOT in this file: they are Constraint priors attached
+# by get_priors(model, constraint=True) and added by fit_redback.build_priors.
+# This model carries none.
+#
+# nn and delta are pinned here, as in shock_cooling.prior: Piro, Haynie & Yao
+# (2021) adopt "typical values ... n~10 and delta~1.1 (Chevalier & Soker 1989)"
+# and state the results are insensitive to them, so sampling them adds two
+# dimensions the likelihood barely constrains.
+#   nn    was Uniform(8, 12)
+#   delta was Uniform(1, 1.5)
+
+redshift = Uniform(minimum=0.001, maximum=3, name='redshift', latex_label='$z$', unit=None, boundary=None)
+log10_mass = Uniform(minimum=-2, maximum=3, name='log10_mass', latex_label='$\\log_{10}~m_{\\mathrm{en}}/M_\\odot$', unit=None, boundary=None)
+log10_radius = Uniform(minimum=10, maximum=14, name='log10_radius', latex_label='$\\log_{10}~R_{\\mathrm{en}}/{\\mathrm{cm}}$', unit=None, boundary=None)
+log10_energy = Uniform(minimum=40, maximum=52, name='log10_energy', latex_label='$\\log_{10}~E_{\\mathrm{en}}/{\\mathrm{erg}}$', unit=None, boundary=None)
+nn = DeltaFunction(peak=10, name='nn', latex_label='$n$', unit=None)
+delta = DeltaFunction(peak=1.1, name='delta', latex_label='$\\delta$', unit=None)
+f_nickel = LogUniform(minimum=0.001, maximum=1, name='f_nickel', latex_label='$f_{\\mathrm{Ni}}$', unit=None, boundary=None)
+mej = LogUniform(minimum=0.0001, maximum=100, name='mej', latex_label='$M_{\\mathrm{ej}}~(M_\\odot)$', unit=None, boundary=None)
+vej = LogUniform(minimum=1000.0, maximum=100000.0, name='vej', latex_label='$v_{\\mathrm{ej}}~(\\mathrm{km}/\\mathrm{s})$', unit=None, boundary=None)
+kappa = Uniform(minimum=0.05, maximum=2, name='kappa', latex_label='$\\kappa~(\\mathrm{cm}^{2}/\\mathrm{g})$', unit=None, boundary=None)
+kappa_gamma = LogUniform(minimum=0.0001, maximum=10000.0, name='kappa_gamma', latex_label='$\\kappa_\\gamma~(\\mathrm{cm}^{2}/\\mathrm{g})$', unit=None, boundary=None)
+temperature_floor = LogUniform(minimum=1000.0, maximum=100000.0, name='temperature_floor', latex_label='$T_{\\mathrm{floor}}~(\\mathrm{K})$', unit=None, boundary=None)

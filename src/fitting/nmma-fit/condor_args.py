@@ -2,7 +2,7 @@
 
 Lives here (not condor/) because only nmma-fit knows its own flags
 (--ebv-max, --z-known, --model, --prior) and how to compute --ebv-max
-(extinction.get_sfd_ebv x EBV_SF2011). condor/submit_batch.py calls this
+(mw_extinction.get_sfd_ebv x EBV_SF2011). condor/submit_batch.py calls this
 generically for any backend, without knowing backend-specific argument
 names or how to build them.
 
@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "ingest"))
-from extinction import EBV_SF2011, get_sfd_ebv
+from mw_extinction import EBV_SF2011, get_sfd_ebv
 
 
 def parse_args() -> argparse.Namespace:

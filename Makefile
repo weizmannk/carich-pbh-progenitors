@@ -10,6 +10,9 @@
 #   make setup-precommit: install pre-commit and its git hook (once, dev-only)
 #   make submit-nmma    : submit condor/submit_batch.py --backend nmma
 #                          (override TARGETS/MODEL/PRIOR, e.g. make submit-nmma MODEL=nugent-sn1a)
+#   make submit-redback : same for redback (override REDBACK_MODEL)
+#   make test           : redback pipeline tests, without the sampling ones
+#   make test-all       : including the injection-recovery test (slow)
 #
 # Prerequisites (Mac):
 #   brew install cmake gfortran openblas open-mpi
@@ -30,12 +33,8 @@ else
     LIB_PATH_VAR := LD_LIBRARY_PATH
 endif
 
-.PHONY: setup-redback setup-mosfit setup-nmma setup-multinest setup-all setup-precommit submit-nmma
-
-#  ============ Redback ============
-setup-redback:
-	uv venv .venv-redback
-	uv pip install --python .venv-redback -r requirements-redback.txt
+.PHONY: setup-redback setup-mosfit setup-nmma setup-multinest setup-all \
+	setup-precommit submit-nmma submit-redback test test-all
 
 #  ============ Mosfit ============
 setup-mosfit:
@@ -50,9 +49,11 @@ setup-mosfit:
 #
 # nmma comes from GitHub, pinned to v1.0.2 (fixes bugs in PyPI's 1.0.1,
 # not yet released there).
+# nmma requires Python >=3.12,<3.14; pinned explicitly because `uv venv` with
+# no --python picks whatever the machine defaults to, and 3.11 fails to resolve.
 NMMA_VERSION := v1.0.2
 setup-nmma: setup-multinest
-	uv venv .venv-nmma
+	uv venv .venv-nmma --python 3.12
 	uv pip install --python .venv-nmma -r requirements-nmma.txt
 	uv pip install --python .venv-nmma "git+https://github.com/nuclear-multimessenger-astronomy/nmma@$(NMMA_VERSION)"
 	uv pip install --python .venv-nmma "git+https://github.com/JohannesBuchner/PyMultiNest"
@@ -78,6 +79,14 @@ setup-multinest:
 
 setup-all: setup-redback setup-mosfit setup-nmma
 
+#  ============ Tests ============
+# They import the redback-fit modules, so they run in .venv-redback.
+test:
+	.venv-redback/bin/python -m pytest -m "not slow" -q
+
+test-all:
+	.venv-redback/bin/python -m pytest -q
+
 #  ============ Dev tooling ============
 # Independent of the three fitting venvs: pre-commit runs at commit time,
 # not inside any of redback/mosfit/nmma.
@@ -94,3 +103,32 @@ submit-nmma:
 	.venv-nmma/bin/python condor/submit_batch.py --backend nmma --targets $(TARGETS) \
 		--data-dir data/processed --outdir results/ \
 		-- --model $(MODEL) --prior $(PRIOR)
+
+# redback takes its own model names (see redback_models.MODELS) and finds its
+# prior in priors_redback/<model>.prior, so neither MODEL nor PRIOR above
+# applies. Override REDBACK_MODEL, e.g. make submit-redback REDBACK_MODEL=slsn.
+REDBACK_MODEL ?= arnett
+
+submit-redback:
+	.venv-redback/bin/python condor/submit_batch.py --backend redback --targets $(TARGETS) \
+		--data-dir data/processed --outdir results/ \
+		-- --model $(REDBACK_MODEL)
+
+# ------------------------------------------------------------------------
+# redback: its own environment.
+#
+# Each fitter gets its own venv. With nmma v1.0.2 the two are closer than they
+# used to be -- both resolve bilby 2.8.2 -- but they still disagree on the
+# array stack (measured: redback numpy 2.5.4 / pandas 3.0.6, nmma numpy 2.3.5 /
+# pandas 3.1.0), and MOSFiT pins numpy <=1.26.4, which neither tolerates.
+# Separate interpreters also keep a redback upgrade from silently changing an
+# NMMA result, which matters more here than the disk space.
+#
+# pymultinest is the default sampler and loads libmultinest at import time,
+# so setup-multinest must have run first.
+# ------------------------------------------------------------------------
+setup-redback: setup-multinest
+	uv venv .venv-redback --python 3.12
+	uv pip install --python .venv-redback -r requirements-redback.txt
+	echo 'export $(LIB_PATH_VAR)=$(HOME)/.local/lib:$$$(LIB_PATH_VAR)' \
+		>> .venv-redback/bin/activate
