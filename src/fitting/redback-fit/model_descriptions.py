@@ -186,11 +186,12 @@ DESCRIPTIONS: dict[str, dict] = {
             "brightness is set through peak_abs_mag rather than the raw "
             "normalisation, whose meaning and scale differ per template. "
             "A SALT template also brings x1 and c, on redback's own "
-            "salt2.prior values. Galactic extinction is NOT applied: redback "
-            "adds sncosmo's F99 effect after model.update() and never sets "
-            "mwebv, so it stays at 0; only the host CCM89 term is live, "
-            "through ebv. Its ln Z is therefore not comparable with the models "
-            "that sample av_mw."
+            "salt2.prior values. Extinction comes from two separate keys: ebv, "
+            "the host term redback gives sncosmo's rest-frame CCM89 effect, "
+            "and av_mw, applied per band with fitzpatrick99 around the "
+            "template because redback registers sncosmo's F99 effect without "
+            "ever setting mwebv. Omitting av_mw does not remove Galactic "
+            "reddening, it transfers it to the host key."
         ),
     },
     "cooling_envelope": {

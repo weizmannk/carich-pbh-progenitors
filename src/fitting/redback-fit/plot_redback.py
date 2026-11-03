@@ -13,14 +13,18 @@ frontend uses, and matches the NMMA figure.
 Two deliberate differences from the NMMA figure, both because redback exports
 different things:
 
-The panel title carries no reduced chi-square. NMMA computes it from the
-best-fit row it exports; redback exports a posterior and an evidence, not a
-maximum-likelihood row, so the same symbol would stand for a different
-quantity. The residual strip shows the same information unambiguously.
+The panel title carries a reduced chi-square, as the NMMA figures do, so the
+two can be read side by side. It is the median of the posterior draws against
+the detections, not a maximum-likelihood row: redback returns a posterior and
+an evidence, so the number is close to NMMA's but not the same construction.
 
 The shaded band is the 16-84 credible interval of the posterior draws, not a
-model curve widened by a fixed error budget. redback has no error-budget
-parameter, and the draws are the uncertainty it actually produces.
+model curve widened by a fixed error budget: the draws are the uncertainty
+redback actually produces. A budget exists here only if ``--likelihood`` asked
+for one of the two classes that sample it, and then it appears as the wider,
+faint error bar behind each point, with the residual strip and the chi-square
+divided by that same sigma. NMMA's ``--em-error-budget`` is the fixed-value
+counterpart.
 """
 
 from __future__ import annotations
@@ -37,7 +41,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
-from redback_models import supports_extinction
+from redback_models import DEFAULT_LIKELIHOOD, LIKELIHOODS, supports_extinction
 
 if TYPE_CHECKING:  # pragma: no cover
     from fit_redback import RunConfig
@@ -198,6 +202,61 @@ def write_posterior_samples(result, label: str, outdir: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     result.posterior.to_csv(path, sep=" ", index=False)
     return path
+
+
+def reduced_chi_square(observed, errors, draws) -> float | None:
+    """Reduced chi-square of the median model against the detections.
+
+    The same quantity ``redback_api/plot_redback.py`` puts in its legend, and
+    the one the NMMA comparison figures carry, so the two can be read side by
+    side.
+
+    It is a **diagnostic computed after the fit**, not the quantity the
+    sampler maximised: redback returns a posterior, so this takes the median
+    of the draws rather than a maximum-likelihood row. Close to NMMA's number
+    but not identical to it.
+
+    ``errors`` must be the same sigma the likelihood used. With the default
+    likelihood those are the photometric errors; add a systematic in
+    quadrature there and this has to follow, or the legend and the inference
+    stop describing the same fit.
+
+    Returns
+    -------
+    float or None
+        None when nothing finite is left to compare.
+    """
+    if draws is None or observed.size == 0:
+        return None
+    median = np.median(draws, axis=0)
+    finite = np.isfinite(median) & np.isfinite(observed) & (errors > 0)
+    if finite.sum() == 0:
+        return None
+    residual = (observed[finite] - median[finite]) / errors[finite]
+    return float(np.sum(residual**2) / finite.sum())
+
+
+def effective_errors(cfg, result, errors, draws):
+    """The sigma the chosen likelihood actually used, per point.
+
+    With ``--likelihood upper-limits`` this is the photometric error and the
+    array comes back untouched. The two budget likelihoods sample a ``sigma``
+    on top of it, so the residual strip and the chi-square have to widen by the
+    same amount, or the figure would report a bad fit that the inference never
+    saw.
+
+    The formulae are redback's own, as :data:`redback_models.LIKELIHOODS`
+    records them: ``quadrature`` adds a constant in magnitudes, ``systematic``
+    scales it by the model value.
+    """
+    name = getattr(cfg, "likelihood", DEFAULT_LIKELIHOOD)
+    if name == DEFAULT_LIKELIHOOD or "sigma" not in result.posterior:
+        return errors
+    sigma = float(np.median(result.posterior["sigma"].to_numpy()))
+    if LIKELIHOODS[name]["sigma"].startswith("sqrt(sigma_i**2 + model"):
+        scale = np.median(draws, axis=0) if draws is not None else 0.0
+        return np.sqrt(errors**2 + (scale * sigma) ** 2)
+    return np.sqrt(errors**2 + sigma**2)
 
 
 def _model_draws(result, model_name: str, times_mjd, bands, sncosmo_model=None):
@@ -532,6 +591,30 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
             )
 
         seen = in_band & detected
+        at_data = _model_draws(
+            result,
+            cfg.model,
+            times_mjd[seen],
+            [band] * int(seen.sum()),
+            getattr(cfg, "sncosmo_model", None),
+        )
+        sigma_eff = effective_errors(cfg, result, errors[seen], at_data)
+
+        # When a budget likelihood ran, the wider bar behind the photometric
+        # one is the sigma the fit actually used. Drawn only then, so the
+        # default figure carries exactly the published error bars and nothing
+        # added on top of them.
+        if not np.allclose(sigma_eff, errors[seen]):
+            main.errorbar(
+                phase[seen],
+                magnitudes[seen],
+                sigma_eff,
+                fmt="none",
+                ecolor=band_colour,
+                alpha=0.3,
+                elinewidth=3.0,
+                zorder=4,
+            )
         main.errorbar(
             phase[seen],
             magnitudes[seen],
@@ -553,18 +636,11 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
                 zorder=5,
             )
 
-        at_data = _model_draws(
-            result,
-            cfg.model,
-            times_mjd[seen],
-            [band] * int(seen.sum()),
-            getattr(cfg, "sncosmo_model", None),
-        )
         if at_data is not None and seen.any():
             median_at_data = np.median(at_data, axis=0)
             residual.scatter(
                 phase[seen],
-                (magnitudes[seen] - median_at_data) / errors[seen],
+                (magnitudes[seen] - median_at_data) / sigma_eff,
                 color=band_colour,
                 s=20,
             )
@@ -584,11 +660,15 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
             )
         main.invert_yaxis()
 
-        # The band name alone. NMMA appends a reduced chi-square computed from
-        # the best-fit row it exports; redback exports a posterior, not a
-        # maximum-likelihood row, so that number is not available here and the
-        # residual strip below carries the same information.
-        _style(figure, main, theme, title=nice_band_name(band))
+        # NMMA computes its chi-square from the best-fit row it exports;
+        # redback exports a posterior, not a maximum-likelihood row, so this
+        # takes the median of the draws. Divided by sigma_eff, not by the
+        # photometric error, so it matches whichever --likelihood ran.
+        chi2 = reduced_chi_square(magnitudes[seen], sigma_eff, at_data)
+        title = nice_band_name(band)
+        if chi2 is not None:
+            title += rf":  $\chi^2/\mathrm{{d.o.f.}} = {chi2:.2f}$"
+        _style(figure, main, theme, title=title)
         _style(figure, residual, theme)
         main.set_ylabel("AB magnitude", fontsize=8)
         legend = main.legend(

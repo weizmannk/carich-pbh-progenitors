@@ -70,9 +70,12 @@ import redback
 from model_descriptions import describe
 from redback_data import build_transient, first_epoch_mjd, read_photometry
 from redback_models import (
+    DEFAULT_LIKELIHOOD,
+    LIKELIHOODS,
     MODELS,
     SNCOSMO_MODEL,
     T0_WINDOW,
+    likelihood_class,
     model_kwargs,
     observed_model,
     sncosmo_prior_stem,
@@ -112,6 +115,9 @@ class RunConfig:
     t0_min: float
     t0_max: float
     sncosmo_model: str
+    likelihood: str
+    sigma_sys_max: float
+    detections_only: bool
     plot_theme: str
     data_tmin: float | None
     data_tmax: float | None
@@ -235,6 +241,33 @@ def parse_args() -> argparse.Namespace:
         default=None,
         dest="t0_max",
         help="Latest t0, same units",
+    )
+    parser.add_argument(
+        "--likelihood",
+        choices=tuple(LIKELIHOODS),
+        default=DEFAULT_LIKELIHOOD,
+        help="Which redback likelihood to use. upper-limits keeps the "
+        "non-detections through a survival term and carries no systematic "
+        "budget; quadrature adds a sampled sigma in quadrature, the formula "
+        "NMMA uses behind --em-error-budget, and drops the limits; systematic "
+        "scales that budget by the model value, which suits flux not "
+        "magnitudes. No redback likelihood does both",
+    )
+    parser.add_argument(
+        "--sigma-sys-max",
+        type=float,
+        default=0.5,
+        dest="sigma_sys_max",
+        help="Upper bound on the sampled sigma, for the budget likelihoods. "
+        "Pin it with a DeltaFunction on 'sigma' in a --priors file to "
+        "reproduce NMMA's fixed --em-error-budget",
+    )
+    parser.add_argument(
+        "--detections-only",
+        action="store_true",
+        dest="detections_only",
+        help="Drop the upper limits before fitting. Required by the budget "
+        "likelihoods, which have no survival term",
     )
     parser.add_argument(
         "--plot-theme",
@@ -387,6 +420,9 @@ def resolve_config(args: argparse.Namespace) -> RunConfig:
         t0_min=window[0] if args.t0_min is None else args.t0_min,
         t0_max=window[1] if args.t0_max is None else args.t0_max,
         sncosmo_model=args.sncosmo_model,
+        likelihood=args.likelihood,
+        sigma_sys_max=args.sigma_sys_max,
+        detections_only=args.detections_only,
         plot_theme=args.plot_theme,
         data_tmin=args.data_tmin,
         data_tmax=args.data_tmax,
@@ -395,6 +431,50 @@ def resolve_config(args: argparse.Namespace) -> RunConfig:
         sampler=args.sampler,
         no_constraint=args.no_constraint,
         seed=args.seed,
+    )
+
+
+def build_likelihood(cfg, transient, model_kwargs_dict):
+    """The redback likelihood ``--likelihood`` names, or None for its default.
+
+    Returns None for ``upper-limits``, which is what ``fit_model`` picks on its
+    own when non-detections are present, so that path stays exactly as redback
+    wrote it.
+
+    The two budget variants add a sampled ``sigma`` on top of the photometric
+    errors, which is the same construction NMMA applies behind
+    ``--em-error-budget``, except that NMMA fixes the value and here the data
+    estimate it. Neither has a survival term, so they refuse to run on data
+    that still carries limits rather than dropping them in silence.
+
+    Raises
+    ------
+    SystemExit
+        If a budget likelihood is asked for while upper limits are present.
+    """
+    if cfg.likelihood == DEFAULT_LIKELIHOOD:
+        return None
+
+    # The same accessor redback's own `_fit_optical_transient` calls, so the
+    # likelihood sees the bands the fit kept and not the whole file.
+    x, _, y, y_err, detections = transient.get_filtered_data_with_limits()
+
+    if detections is not None and not np.all(detections):
+        raise SystemExit(
+            f"--likelihood {cfg.likelihood} has no survival term and "
+            f"{cfg.object_name} still carries {int(np.sum(~detections))} upper "
+            "limits. Add --detections-only to drop them deliberately, or keep "
+            f"--likelihood {DEFAULT_LIKELIHOOD}."
+        )
+
+    spec = LIKELIHOODS[cfg.likelihood]
+    logger.info("likelihood %s: sigma = %s", spec["cls"], spec["sigma"])
+    return likelihood_class(cfg.likelihood)(
+        x=np.asarray(x, dtype=float),
+        y=np.asarray(y, dtype=float),
+        sigma_i=np.asarray(y_err, dtype=float),
+        function=observed_model(cfg.model),
+        kwargs=model_kwargs_dict,
     )
 
 
@@ -477,10 +557,23 @@ def summarise(result, cfg: RunConfig, transient, priors) -> dict:
         "redshift_mode": cfg.redshift_mode,
         "extinction": extinction_summary(cfg),
         "upper_limit_sigma": float(transient.upper_limit_sigma),
+        # What --likelihood resolved to. On the default it is redback's own
+        # choice in `_fit_optical_transient`, reproduced here: the upper-limit
+        # class when limits survived the band filter, a plain Gaussian when
+        # none did.
         "likelihood": (
-            "GaussianLikelihoodWithUpperLimits"
-            if transient.has_upper_limits and detections is not None
-            else "GaussianLikelihood"
+            LIKELIHOODS[cfg.likelihood]["cls"]
+            if cfg.likelihood != DEFAULT_LIKELIHOOD
+            else (
+                "GaussianLikelihoodWithUpperLimits"
+                if transient.has_upper_limits and detections is not None
+                else "GaussianLikelihood"
+            )
+        ),
+        "sigma_sys": (
+            float(np.median(result.posterior["sigma"].to_numpy()))
+            if "sigma" in result.posterior
+            else None
         ),
         "n_detections": n_detections,
         "n_upper_limits": n_total - n_detections,
@@ -538,8 +631,16 @@ def main() -> int:
     bilby.core.utils.random.seed(cfg.seed)
 
     rows = read_photometry(cfg.datafile)
-    # redback anchors t0 and every window on the first epoch, upper limits
-    # included (supernova.x[0] in its examples), not on the first detection.
+    if cfg.detections_only:
+        kept = [row for row in rows if row["detected"]]
+        logger.warning(
+            "--detections-only: %d upper limits dropped, %d detections kept. "
+            "They bound t0 from above, so its posterior widens, and the ln Z "
+            "is not comparable with a run that keeps them.",
+            len(rows) - len(kept),
+            len(kept),
+        )
+        rows = kept
     reference_mjd = first_epoch_mjd(rows)
 
     transient = build_transient(
@@ -550,9 +651,10 @@ def main() -> int:
         data_tmax=cfg.data_tmax,
     )
 
-    # The brightest detection centres the sncosmo peak_time prior, which is how
-    # redback's own example sets it: data_peak = sn.x[np.argmin(sn.y)].
     priors = build_priors(cfg, reference_mjd, bands=transient.filtered_bands)
+    kwargs_for_model = model_kwargs(
+        cfg.model, transient.filtered_bands, sncosmo_model=cfg.sncosmo_model
+    )
 
     outdir = cfg.outdir / cfg.model / cfg.object_name
     outdir.mkdir(parents=True, exist_ok=True)
@@ -562,11 +664,12 @@ def main() -> int:
         transient=transient,
         model=observed_model(cfg.model),
         prior=priors,
-        model_kwargs=model_kwargs(
-            cfg.model,
-            transient.filtered_bands,
-            sncosmo_model=cfg.sncosmo_model,
-        ),
+        # `likelihood` is not in fit_model's own signature but is a parameter of
+        # the _fit_optical_transient it dispatches to, reached through **kwargs.
+        # None is that function's default, so --likelihood upper-limits leaves
+        # the choice entirely to redback.
+        likelihood=build_likelihood(cfg, transient, kwargs_for_model),
+        model_kwargs=kwargs_for_model,
         sampler=cfg.sampler,
         nlive=cfg.nlive,
         outdir=str(outdir),

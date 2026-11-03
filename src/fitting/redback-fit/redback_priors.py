@@ -26,6 +26,7 @@ from __future__ import annotations
 import logging
 
 from redback_models import (
+    R_V_MW,
     constraint_keys,
     extinction_model,
     has_constraints,
@@ -33,9 +34,6 @@ from redback_models import (
     sampled,
     supports_extinction,
 )
-
-# redback's own default for rv_mw in the extinction models. A_V = R_V * E(B-V).
-R_V_MW = 3.1
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +119,22 @@ def _set_redshift(priors, cfg) -> None:
     logger.info("redshift: %s", cfg.redshift_mode)
 
 
+def _supplied(priors, key: str) -> bool:
+    """Whether a --priors file already set this key, which then wins.
+
+    The extinction flags derive a bound from a dust map or from
+    --av-host-max; an explicit line in a prior file is a measurement the
+    caller already has, so it takes precedence rather than being overwritten
+    without a word. Same rule ``amplitude`` follows.
+    """
+    if key not in priors:
+        return False
+    logger.info(
+        "%s supplied by the prior file, flags not applied: %s", key, priors[key]
+    )
+    return True
+
+
 def _set_extinction(priors, cfg) -> None:
     """Put extinction in the forward model, bounded by the dust map.
 
@@ -152,7 +166,9 @@ def _set_extinction(priors, cfg) -> None:
         return
 
     av_mw_max = R_V_MW * float(cfg.ebv_mw)
-    if av_mw_max > 0:
+    if _supplied(priors, "av_mw"):
+        pass
+    elif av_mw_max > 0:
         priors["av_mw"] = bilby.core.prior.Uniform(
             minimum=0.0,
             maximum=av_mw_max,
@@ -172,7 +188,9 @@ def _set_extinction(priors, cfg) -> None:
         )
         logger.warning("No E(B-V) bound available: av_mw pinned at 0")
 
-    if cfg.sample_av_host:
+    if _supplied(priors, "av_host"):
+        pass
+    elif cfg.sample_av_host:
         priors["av_host"] = bilby.core.prior.Uniform(
             minimum=0.0,
             maximum=cfg.av_host_max,
@@ -291,9 +309,12 @@ def _sncosmo_priors(cfg, reference_mjd: float, bands=None):
     sampled t0 would be a flat direction, so it is left out.
 
     ``ebv`` is the host E(B-V) redback hands to sncosmo's CCM89 effect, the same
-    quantity ``--sample-av-host`` controls elsewhere. There is no Galactic
-    counterpart: redback adds the F99 effect after ``model.update()`` and never
-    sets ``mwebv``, so it stays at 0 and that effect is inert.
+    quantity ``--sample-av-host`` controls elsewhere. ``av_mw`` is its Galactic
+    counterpart, bounded by the dust map and applied around the template by
+    :func:`redback_models._with_galactic_extinction`, since redback registers
+    sncosmo's F99 effect without ever setting ``mwebv``. Both are needed: with
+    only ``ebv``, the host key absorbs the Galactic reddening and is then
+    reported as host extinction.
 
     Parameters
     ----------
@@ -372,7 +393,9 @@ def _sncosmo_priors(cfg, reference_mjd: float, bands=None):
             AMPLITUDE_PEAK_ABS_MAG,
         )
 
-    if cfg.sample_av_host:
+    if _supplied(priors, "ebv"):
+        pass
+    elif cfg.sample_av_host:
         ebv_max = cfg.av_host_max / R_V_MW
         priors["ebv"] = bilby.core.prior.Uniform(
             minimum=0.0,
@@ -421,27 +444,77 @@ def _sncosmo_priors(cfg, reference_mjd: float, bands=None):
         cfg.t0_min,
         cfg.t0_max,
     )
-    logger.warning(
-        "Galactic extinction is NOT applied on the sncosmo path: redback adds "
-        "the F99 effect but never sets mwebv, so it stays at 0. ln Z is not "
-        "comparable with the models that sample av_mw."
-    )
-    if cfg.ebv_mw:
-        logger.warning(
-            "--ebv-mw %.4f is IGNORED here. It bounds av_mw, which only the "
-            "physical models carry; this path has no Galactic term at all. The "
-            "host E(B-V) it might look like is the separate 'ebv' key, driven "
-            "by --sample-av-host.",
-            cfg.ebv_mw,
+    add_systematic_sigma(priors, cfg)
+
+    # Galactic extinction, bounded by the dust map and marginalised, the same
+    # treatment the physical models get and the same NMMA gives --Ebv-max.
+    # redback cannot carry it on this path, so _with_galactic_extinction
+    # applies it around the model; see its docstring for why.
+    av_mw_max = R_V_MW * float(cfg.ebv_mw)
+    if _supplied(priors, "av_mw"):
+        pass
+    elif av_mw_max > 0:
+        priors["av_mw"] = bilby.core.prior.Uniform(
+            minimum=0.0,
+            maximum=av_mw_max,
+            name="av_mw",
+            latex_label=r"$A_V^{\mathrm{MW}}$",
         )
-    if not cfg.sample_av_host:
+        logger.info(
+            "av_mw ~ Uniform(0, %.4f) mag, from E(B-V) = %.4f (%s) x R_V = %.1f, "
+            "applied per band with fitzpatrick99 around the template",
+            av_mw_max,
+            cfg.ebv_mw,
+            cfg.ebv_source,
+            R_V_MW,
+        )
+    else:
+        priors["av_mw"] = bilby.core.prior.DeltaFunction(
+            0.0, name="av_mw", latex_label=r"$A_V^{\mathrm{MW}}$"
+        )
+        logger.warning(
+            "No E(B-V) bound available: av_mw pinned at 0, so Galactic "
+            "reddening will be absorbed by the host 'ebv' key instead. Pass "
+            "--ra/--dec or --ebv-mw to separate the two."
+        )
+    if not cfg.sample_av_host and isinstance(
+        priors["ebv"], bilby.core.prior.DeltaFunction
+    ):
         logger.info(
             "ebv pinned at 0: host extinction is off unless --sample-av-host "
-            "is given. Note redback's own default for this key is 0.1, which "
-            "would redden every template silently; 0 is set deliberately."
+            "is given, or 'ebv' is set in the --priors file. Note redback's "
+            "own default for this key is 0.1, which would redden every "
+            "template silently; 0 is set deliberately."
         )
 
     return priors
+
+
+def add_systematic_sigma(priors, cfg) -> None:
+    """Add the ``sigma`` key the budget likelihoods sample.
+
+    ``GaussianLikelihoodQuadratureNoise`` and its systematic variant read a
+    parameter named ``sigma``; without it in the prior bilby never samples it.
+    Left free, which is where this differs from NMMA by design: its
+    ``--em-error-budget`` makes the caller guess how unfaithful the model is,
+    here the data answer. Pin it with a DeltaFunction on ``sigma`` in a
+    --priors file to reproduce NMMA exactly.
+    """
+    import bilby
+    from redback_models import DEFAULT_LIKELIHOOD
+
+    if getattr(cfg, "likelihood", DEFAULT_LIKELIHOOD) == DEFAULT_LIKELIHOOD:
+        return
+    if "sigma" in priors:
+        logger.info("sigma supplied by the prior file, left as it is")
+        return
+    priors["sigma"] = bilby.core.prior.Uniform(
+        minimum=0.0,
+        maximum=cfg.sigma_sys_max,
+        name="sigma",
+        latex_label=r"$\sigma_{\mathrm{sys}}$",
+    )
+    logger.info("sigma ~ Uniform(0, %.3f), sampled", cfg.sigma_sys_max)
 
 
 def build_priors(cfg, reference_mjd: float, bands=None):
@@ -550,6 +623,8 @@ def build_priors(cfg, reference_mjd: float, bands=None):
                 getattr(conversion, "__name__", "conversion"),
             )
 
+    add_systematic_sigma(priors, cfg)
+
     return priors
 
 
@@ -559,14 +634,19 @@ def extinction_summary(cfg) -> dict:
 
     if cfg.model == SNCOSMO_MODEL:
         return {
-            "treatment": "host only, inside sncosmo",
-            "law": "ccm89 (host, rest frame)",
+            "treatment": "host inside sncosmo, Galactic around it",
+            "law": "ccm89 (host, rest frame) + fitzpatrick99 (MW, observer)",
             "ebv_host_sampled": bool(cfg.sample_av_host),
             "ebv_host_max": (cfg.av_host_max / R_V_MW if cfg.sample_av_host else 0.0),
+            "ebv_mw_bound": cfg.ebv_mw,
+            "ebv_source": cfg.ebv_source,
+            "av_mw_max": R_V_MW * float(cfg.ebv_mw),
+            "r_v": R_V_MW,
             "reason": (
-                "redback adds sncosmo's F99 Milky Way effect but never sets "
-                "mwebv, so Galactic extinction is inert on this path; ln Z "
-                "not comparable with the models that sample av_mw"
+                "redback registers sncosmo's F99 Milky Way effect but never "
+                "sets mwebv and cannot be passed it, so av_mw is applied per "
+                "band around the template; without it the host ebv absorbs "
+                "the Galactic reddening"
             ),
         }
     if not supports_extinction(cfg.model):

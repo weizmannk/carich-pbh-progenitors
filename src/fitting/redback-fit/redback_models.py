@@ -121,7 +121,10 @@ T0_WINDOW: dict[str, tuple[float, float]] = {
 # identical magnitudes to every decimal, while changing peak_time changes them.
 # A sampled t0 would therefore be a flat direction, costing prior volume and
 # buying nothing.
-SNCOSMO_COMMON_KEYS: tuple[str, ...] = ("redshift", "peak_time", "ebv")
+# redback's own default for rv_mw in its extinction models. A_V = R_V x E(B-V).
+R_V_MW = 3.1
+
+SNCOSMO_COMMON_KEYS: tuple[str, ...] = ("redshift", "peak_time", "ebv", "av_mw")
 
 # sncosmo_models is called directly: it sets its own time origin with
 # ``model.set(t0=peak_time)`` and adds its own extinction inside sncosmo, and
@@ -141,6 +144,49 @@ _MODEL_TYPE_FALLBACK = {
 # through 'spectra'. Measured against t0_base_model at zero extinction, post-t0:
 # the four other models agree to 0.000000 mag, cooling_envelope diverges by 1.55.
 _NO_EXTINCTION_WRAPPER = frozenset({"cooling_envelope"})
+
+
+# redback's likelihoods for magnitude data, with what each one can and cannot
+# do. None offers both a systematic budget and a survival term for upper
+# limits, which NMMA does in a single function, so the caller has to choose.
+#
+#   sigma_i is the photometric error from the file; sigma is a sampled
+#   parameter added to it by the two budget variants.
+LIKELIHOODS = {
+    "upper-limits": dict(
+        cls="GaussianLikelihoodWithUpperLimits",
+        sigma="sigma_i only",
+        limits=True,
+        note="redback's own choice when non-detections are present. Keeps "
+        "them through a survival term, carries no systematic budget.",
+    ),
+    "quadrature": dict(
+        cls="GaussianLikelihoodQuadratureNoise",
+        sigma="sqrt(sigma_i**2 + sigma**2)",
+        limits=False,
+        note="an additive budget in magnitudes, the same formula NMMA applies "
+        "behind --em-error-budget, with sigma sampled rather than fixed. "
+        "Drops upper limits: no survival term.",
+    ),
+    "systematic": dict(
+        cls="GaussianLikelihoodWithSystematicNoise",
+        sigma="sqrt(sigma_i**2 + model**2 * sigma**2)",
+        limits=False,
+        note="a budget proportional to the model value, which is a fractional "
+        "error on a FLUX. In magnitude mode model**2 is ~361 at mag 19, so "
+        "the parameter is amplified and scales with brightness, which a "
+        "logarithmic quantity should not do. Drops upper limits.",
+    ),
+}
+
+DEFAULT_LIKELIHOOD = "upper-limits"
+
+
+def likelihood_class(name: str):
+    """The redback likelihood class named by a :data:`LIKELIHOODS` key."""
+    import redback.likelihoods as L
+
+    return getattr(L, LIKELIHOODS[name]["cls"])
 
 
 def model_type(name: str) -> str | None:
@@ -353,8 +399,76 @@ def observed_model(name: str):
     from redback.model_library import all_models_dict
 
     if name in _NO_PHASE_MODEL:
-        return _reject_outside_template(all_models_dict[name])
+        return _with_galactic_extinction(
+            _reject_outside_template(all_models_dict[name])
+        )
     return all_models_dict[extinction_model(name) or "t0_base_model"]
+
+
+# Effective wavelength per band, in Angstrom. Filled on demand from sncosmo's
+# own bandpass registry, the same one the template is evaluated against.
+_WAVE_EFF: dict[str, float] = {}
+
+
+def _wave_eff(band: str) -> float:
+    """Effective wavelength of a band, cached, from sncosmo's registry."""
+    if band not in _WAVE_EFF:
+        import sncosmo
+
+        _WAVE_EFF[band] = float(sncosmo.get_bandpass(band).wave_eff)
+    return _WAVE_EFF[band]
+
+
+def _with_galactic_extinction(function):
+    """Redden the model by a sampled Galactic ``av_mw``, as NMMA does.
+
+    redback's ``sncosmo_models`` registers ``sncosmo.F99Dust()`` as the 'mw'
+    effect but never sets ``mwebv``, and the string appears nowhere in redback,
+    so the Galactic term is inert on that path. It cannot be supplied either:
+    ``model.update(_model_kwargs)`` runs *before* ``add_effect``, so the
+    parameter does not exist yet when redback reads its kwargs.
+
+    Without it the reddening does not vanish, it is reassigned: measured on
+    SN2021ugl, the host ``ebv`` drops by 0.069 when the Galactic 0.0637 is
+    removed from the data, so the host parameter was absorbing it almost one
+    for one and was being reported as host extinction.
+
+    This closes that gap the same way NMMA does in
+    ``EMModel.apply_extinction_correction``: a per-filter ``A_lambda`` added to
+    the model magnitudes, with ``E(B-V)`` sampled under a dust-map bound rather
+    than fixed. Two deliberate differences from NMMA, both for consistency
+    inside this pipeline rather than with it:
+
+    - the curve is ``fitzpatrick99``, redback's own default ``mw_law``, not
+      NMMA's G23. Measured over the bands used here the two differ by at most
+      0.0084 mag, against photometric errors of 0.113, so the choice is
+      numerically irrelevant and internal consistency decides it.
+    - the parameter is ``av_mw`` in magnitudes of A_V, redback's own
+      parameterisation for the physical models, not NMMA's ``Ebv``. They are
+      the same quantity through A_V = R_V x E(B-V).
+
+    ``av_mw`` is consumed here and never reaches ``sncosmo_models``, which
+    would pass an unknown name to ``model.update()``.
+    """
+    import functools
+
+    @functools.wraps(function)
+    def wrapped(time, *args, **kwargs):
+        av_mw = float(kwargs.pop("av_mw", 0.0) or 0.0)
+        result = function(time, *args, **kwargs)
+        if av_mw == 0.0:
+            return result
+
+        import extinction
+
+        bands = np.atleast_1d(kwargs.get("bands"))
+        waves = np.array([_wave_eff(str(b)) for b in bands], dtype=float)
+        a_lambda = extinction.fitzpatrick99(waves, av_mw, R_V_MW)
+        if kwargs.get("output_format") == "magnitude":
+            return result + a_lambda
+        return result * 10.0 ** (-0.4 * a_lambda)
+
+    return wrapped
 
 
 def _reject_outside_template(function):
@@ -426,8 +540,10 @@ def model_kwargs(name: str, bands, *, sncosmo_model: str | None = None) -> dict:
 
     redback adds its Milky Way extinction effect after ``model.update()``, and
     nothing then sets ``mwebv``, so sncosmo's default of 0.0 stands and the
-    effect is inert. Galactic extinction is therefore NOT applied on this
-    path, and ``av_mw`` has no counterpart here.
+    effect is inert, so ``av_mw`` is applied by
+    :func:`_with_galactic_extinction` around the model instead of by redback,
+    and is deliberately absent from ``model_kwarg_names``: ``model.update()``
+    would reject a name the template does not define.
     """
     from redback.utils import bands_to_frequency
 

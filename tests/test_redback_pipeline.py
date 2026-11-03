@@ -77,6 +77,9 @@ def _config(**overrides):
         t0_min=-150.0,
         t0_max=0.0,
         sncosmo_model="v19-1993j-corr",
+        likelihood="upper-limits",
+        sigma_sys_max=0.5,
+        detections_only=False,
         plot_theme="print",
         data_tmin=None,
         data_tmax=None,
@@ -583,12 +586,13 @@ def test_sncosmo_is_called_directly():
     """
     from redback.model_library import all_models_dict
 
-    # Wrapped, so an out-of-range band rejects the sample instead of crashing,
-    # but it is redback's own function underneath.
-    assert (
-        rm.observed_model(rm.SNCOSMO_MODEL).__wrapped__
-        is all_models_dict[rm.SNCOSMO_MODEL]
-    )
+    # Wrapped twice, so an out-of-range band rejects the sample instead of
+    # crashing and av_mw reddens the result, but it is redback's own function
+    # underneath and no phase model stands between them.
+    function = rm.observed_model(rm.SNCOSMO_MODEL)
+    while hasattr(function, "__wrapped__"):
+        function = function.__wrapped__
+    assert function is all_models_dict[rm.SNCOSMO_MODEL]
     assert not rm.supports_extinction(rm.SNCOSMO_MODEL)
     assert rm.time_parameter(rm.SNCOSMO_MODEL) == "peak_time"
     assert rm.time_parameter("arnett") == "t0"
@@ -1256,3 +1260,185 @@ def test_injection_recovery_slsn(tmp_path):
         assert low <= expected <= high, (
             f"{parameter}: {expected} outside [{low}, {high}]"
         )
+
+
+def test_every_likelihood_resolves_to_a_redback_class():
+    """``--likelihood`` must name classes redback actually ships.
+
+    The registry carries the sigma formula in prose; if a future redback
+    renames a class this fails here instead of at the first likelihood call,
+    hours into a fit.
+    """
+    import redback_models as rm
+
+    for name, spec in rm.LIKELIHOODS.items():
+        cls = rm.likelihood_class(name)
+        assert cls.__name__ == spec["cls"]
+        assert "sigma" in spec and "note" in spec
+
+    assert rm.DEFAULT_LIKELIHOOD in rm.LIKELIHOODS
+
+
+def test_default_likelihood_leaves_the_choice_to_redback():
+    """The default must return None, which is ``_fit_optical_transient``'s own.
+
+    Passing a class built here would duplicate redback's logic and could drift
+    from it; returning None keeps that path byte-for-byte redback's.
+    """
+    import fit_redback
+
+    assert fit_redback.build_likelihood(_config(), object(), {}) is None
+
+
+def test_budget_likelihoods_refuse_to_drop_upper_limits():
+    """A budget likelihood has no survival term, so limits must not vanish.
+
+    Silently fitting detections only would change the t0 posterior and the
+    ln Z without saying so, which is the one failure mode worth a hard stop.
+    """
+    import fit_redback
+    import numpy as np
+    import pytest
+
+    class _WithLimits:
+        def get_filtered_data_with_limits(self):
+            n = 5
+            detections = np.array([True, True, False, True, False])
+            return (
+                np.arange(n, dtype=float),
+                None,
+                np.full(n, 20.0),
+                np.full(n, 0.1),
+                detections,
+            )
+
+    with pytest.raises(SystemExit, match="2 upper limits"):
+        fit_redback.build_likelihood(
+            _config(likelihood="quadrature"), _WithLimits(), {}
+        )
+
+
+def test_budget_likelihoods_sample_sigma():
+    """The budget classes read a parameter named ``sigma``.
+
+    Without it in the prior bilby never varies it and the budget is silently
+    pinned at whatever the class defaults to, which would look like a working
+    fit.
+    """
+    from redback_priors import build_priors
+
+    plain = build_priors(_config(), 59419.0)
+    assert "sigma" not in plain
+
+    for name in ("quadrature", "systematic"):
+        priors = build_priors(_config(likelihood=name), 59419.0)
+        assert priors["sigma"].maximum == 0.5
+        assert priors["sigma"].minimum == 0.0
+
+
+def test_effective_errors_widen_only_for_budget_likelihoods():
+    """The plotted chi-square must use the same sigma the likelihood did."""
+    import types
+
+    import numpy as np
+    import pandas
+    import plot_redback
+
+    errors = np.array([0.1, 0.1])
+    draws = np.array([[20.0, 20.0], [20.0, 20.0]])
+    result = types.SimpleNamespace(posterior=pandas.DataFrame({"sigma": [0.2, 0.2]}))
+
+    unchanged = plot_redback.effective_errors(_config(), result, errors, draws)
+    assert np.allclose(unchanged, errors)
+
+    widened = plot_redback.effective_errors(
+        _config(likelihood="quadrature"), result, errors, draws
+    )
+    assert np.allclose(widened, np.sqrt(0.1**2 + 0.2**2))
+
+    scaled = plot_redback.effective_errors(
+        _config(likelihood="systematic"), result, errors, draws
+    )
+    assert np.allclose(scaled, np.sqrt(0.1**2 + (20.0 * 0.2) ** 2))
+
+
+def test_prior_file_extinction_wins_over_the_flags(tmp_path):
+    """An E(B-V) written in a --priors file must not be silently overwritten.
+
+    The flags derive a bound from a dust map or from --av-host-max; a line in
+    the file is a value the caller already measured. Overwriting it without a
+    word was the behaviour before, and it changed the prior volume, so the
+    ln Z too.
+    """
+    import pytest
+    from redback_priors import build_priors
+
+    base = dict(
+        model="sncosmo_models",
+        sncosmo_model="v19-1993j-corr",
+        sample_av_host=True,
+        av_host_max=1.0,
+        z_known=None,
+    )
+
+    derived = build_priors(_config(**base), 59419.0, bands=["ztfg"])
+    assert derived["ebv"].maximum == pytest.approx(1.0 / 3.1)
+
+    path = tmp_path / "with_ebv.prior"
+    path.write_text(
+        "redshift = Uniform(minimum=0.01, maximum=3, name='redshift')\n"
+        "amplitude = LogUniform(minimum=1e-22, maximum=1e-2, name='amplitude')\n"
+        "ebv = Uniform(minimum=0, maximum=0.08, name='ebv')\n"
+    )
+    kept = build_priors(_config(priors=path, **base), 59419.0, bands=["ztfg"])
+    assert kept["ebv"].maximum == 0.08
+
+
+def test_galactic_extinction_reddens_the_template_per_band():
+    """av_mw must add the fitzpatrick99 A_lambda of each band, nothing else.
+
+    redback leaves this path with an inert 'mw' effect: it registers F99Dust
+    but never sets mwebv, and the parameter cannot be supplied because
+    model.update() runs before add_effect. Without this wrapper the Galactic
+    reddening is silently absorbed by the host 'ebv' key and reported as host
+    extinction.
+    """
+    import extinction
+    import numpy as np
+
+    model = rm.observed_model(rm.SNCOSMO_MODEL)
+    bands = ["ztfg", "ztfr", "atlasc", "atlaso"]
+    shared = dict(
+        redshift=0.0412,
+        peak_time=59419.0,
+        amplitude=1e-13,
+        ebv=0.0,
+        **rm.model_kwargs(rm.SNCOSMO_MODEL, bands, sncosmo_model="v19-1993j-corr"),
+    )
+    times = np.full(len(bands), 59425.0)
+
+    bare = model(times, av_mw=0.0, **shared)
+    av_mw = 3.1 * 0.0637
+    reddened = model(times, av_mw=av_mw, **shared)
+
+    waves = np.array([rm._wave_eff(b) for b in bands])
+    expected = extinction.fitzpatrick99(waves, av_mw, 3.1)
+    assert np.allclose(reddened - bare, expected)
+
+    # Monotonic with wavelength, and the right order of magnitude: 0.233 mag in
+    # g for the SN2021ugl line of sight.
+    assert expected[0] == pytest.approx(0.233, abs=5e-3)
+    assert expected[0] > expected[1]
+
+
+def test_av_mw_never_reaches_model_update():
+    """sncosmo would reject 'av_mw': it is not a template parameter.
+
+    model_kwarg_names is what redback feeds to model.update(), so av_mw must
+    stay out of it and be consumed by the wrapper instead.
+    """
+    names = rm.model_kwargs(rm.SNCOSMO_MODEL, ["ztfg"], sncosmo_model="v19-1993j-corr")[
+        "model_kwarg_names"
+    ]
+    assert "av_mw" not in names
+    assert "av_mw" in rm.sncosmo_keys("v19-1993j-corr")
