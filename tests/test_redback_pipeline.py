@@ -1337,7 +1337,7 @@ def test_budget_likelihoods_sample_sigma():
 
 
 def test_effective_errors_widen_only_for_budget_likelihoods():
-    """The plotted chi-square must use the same sigma the likelihood did."""
+    """The residual strip must use the same sigma the likelihood did."""
     import types
 
     import numpy as np
@@ -1442,3 +1442,138 @@ def test_av_mw_never_reaches_model_update():
     ]
     assert "av_mw" not in names
     assert "av_mw" in rm.sncosmo_keys("v19-1993j-corr")
+
+
+def test_t0_window_comes_from_the_data_not_a_table():
+    """The window must adapt to each file's cadence, with no per-target tuning.
+
+    A fixed (-2, +1) is 3 days wide wherever it is applied, but the gap from
+    the first epoch to the first detection is 3.99 d on SN2021ugl and 6.04 d
+    on SN2020oi. On the second the fixed window sits entirely before the deep
+    pre-explosion limit, so it places the explosion where the data exclude it.
+    """
+    reference, detection = 58849.503, 58855.542
+    assert rm.t0_window("arnett", reference, detection) == (0.0, detection - reference)
+
+    # Upper bound is the first detection: t0_base_model returns 1000 mag
+    # before t0, so any later value is dead prior volume and only taxes ln Z.
+    low, high = rm.t0_window("shock_cooling_and_arnett", reference, detection)
+    assert reference + high == pytest.approx(detection)
+    assert low == 0.0
+
+
+def test_t0_window_keeps_the_table_for_peak_time_models():
+    """sncosmo samples peak_time, maximum light, which the first detection
+    does not bound: on a double-peaked IIb it belongs before it."""
+    assert (
+        rm.t0_window(rm.SNCOSMO_MODEL, 58849.503, 58855.542)
+        == rm.T0_WINDOW[rm.SNCOSMO_MODEL]
+    )
+
+
+def test_t0_window_falls_back_without_epochs():
+    """No epochs, or a file starting on its first detection, keeps the table."""
+    assert rm.t0_window("arnett") == rm.T0_WINDOW["arnett"]
+    # Nothing before the transient: the model's own slack, capped at the
+    # detection so t0 cannot land after the object was seen.
+    assert rm.t0_window("arnett", 100.0, 100.0) == (rm.T0_WINDOW["arnett"][0], 0.0)
+
+
+@pytest.mark.parametrize("name", ["SN2021ugl"])
+def test_t0_window_never_allows_t0_after_the_first_detection(name):
+    """The one invariant worth a guard: a transient explodes before it is seen."""
+    rows = rd.read_photometry(REPO_ROOT / "data" / "processed" / f"{name}.dat")
+    reference = rd.first_epoch_mjd(rows)
+    detection = rd.first_detection_mjd(rows)
+    for model in rm.MODELS:
+        if model == rm.SNCOSMO_MODEL:
+            continue
+        _, high = rm.t0_window(model, reference, detection)
+        assert reference + high <= detection + 1e-9, model
+
+
+def test_t0_never_starts_after_the_first_fitted_detection(tmp_path):
+    """--detections-only must not shift the window past the first detection.
+
+    The window is a pair of offsets from the first row of the data actually
+    fitted. Computing them on the whole file while the fit sees only the
+    detections moved t0 to [first detection, +6.04 d] on SN2020oi, so
+    t0_base_model returned its 1000 mag sentinel for every earlier epoch:
+    ln Z went to -4.9e7 and the sampled systematic railed at its ceiling.
+    """
+    import argparse
+
+    import fit_redback
+
+    base = dict(
+        object=None,
+        data=DATAFILE,
+        outdir=tmp_path,
+        model="arnett",
+        priors=None,
+        kappa=None,
+        z_known=None,
+        z_phot=None,
+        z_phot_err=None,
+        ra=None,
+        dec=None,
+        ebv_mw=0.0637,
+        sample_av_host=False,
+        av_host_max=1.0,
+        t0_min=None,
+        t0_max=None,
+        sncosmo_model="v19-1993j-corr",
+        likelihood="upper-limits",
+        sigma_sys_max=0.5,
+        plot_theme="print",
+        data_tmin=None,
+        data_tmax=None,
+        upper_limit_sigma=3.0,
+        nlive=100,
+        sampler="dynesty",
+        no_constraint=False,
+        seed=42,
+    )
+    rows = rd.read_photometry(DATAFILE)
+    detection = rd.first_detection_mjd(rows)
+
+    for detections_only in (False, True):
+        args = argparse.Namespace(
+            **{**base, "object": "SN2021ugl", "detections_only": detections_only}
+        )
+        cfg = fit_redback.resolve_config(args)
+        kept = [r for r in rows if r["detected"]] if detections_only else rows
+        reference = rd.first_epoch_mjd(kept)
+        assert reference + cfg.t0_max <= detection + 1e-9, (
+            f"detections_only={detections_only}: t0 may start after the first "
+            f"detection, where the model is the 1000 mag sentinel"
+        )
+
+
+def test_a_railed_systematic_is_reported():
+    """A sigma clipped by its ceiling must not pass silently.
+
+    It inflates every chi-square and narrows M_Ni's interval while nothing in
+    the output looks wrong, which is how two SN2020oi runs went unnoticed.
+    """
+    import types
+
+    import fit_redback
+    import numpy as np
+    import pandas
+
+    cfg = _config(likelihood="quadrature", sigma_sys_max=0.25)
+
+    railed = types.SimpleNamespace(
+        posterior=pandas.DataFrame({"sigma": np.linspace(0.238, 0.25, 500)})
+    )
+    assert fit_redback.warn_if_sigma_railed(railed, cfg) is True
+
+    healthy = types.SimpleNamespace(
+        posterior=pandas.DataFrame({"sigma": np.linspace(0.02, 0.12, 500)})
+    )
+    assert fit_redback.warn_if_sigma_railed(healthy, cfg) is False
+
+    # The default likelihood samples no sigma at all.
+    none = types.SimpleNamespace(posterior=pandas.DataFrame({"mej": [1.0, 2.0]}))
+    assert fit_redback.warn_if_sigma_railed(none, _config()) is False

@@ -10,20 +10,22 @@ default, is a plain figure for a paper. ``astrocolibri`` is the branded dark
 figure the app shows, with the logo, the slate ground and the filter colours the
 frontend uses, and matches the NMMA figure.
 
-Two deliberate differences from the NMMA figure, both because redback exports
+One deliberate difference from the NMMA figure, because redback exports
 different things:
 
-The panel title carries a reduced chi-square, as the NMMA figures do, so the
-two can be read side by side. It is the median of the posterior draws against
-the detections, not a maximum-likelihood row: redback returns a posterior and
-an evidence, so the number is close to NMMA's but not the same construction.
+The panel title carries the band name alone. NMMA appends a reduced
+chi-square; that number conflates how good the model is with how precise the
+photometry is, and on data at 0.04 mag it reads as a failure for a fit that is
+accurate to 0.13 mag. The residual strip under each panel already shows the
+same information per epoch, in units of sigma and with its sign, which is what
+makes a systematic trend legible rather than a single scalar.
 
 The shaded band is the 16-84 credible interval of the posterior draws, not a
 model curve widened by a fixed error budget: the draws are the uncertainty
 redback actually produces. A budget exists here only if ``--likelihood`` asked
 for one of the two classes that sample it, and then it appears as the wider,
-faint error bar behind each point, with the residual strip and the chi-square
-divided by that same sigma. NMMA's ``--em-error-budget`` is the fixed-value
+faint error bar behind each point, with the residual strip divided by that
+same sigma. NMMA's ``--em-error-budget`` is the fixed-value
 counterpart.
 """
 
@@ -204,46 +206,13 @@ def write_posterior_samples(result, label: str, outdir: Path) -> Path:
     return path
 
 
-def reduced_chi_square(observed, errors, draws) -> float | None:
-    """Reduced chi-square of the median model against the detections.
-
-    The same quantity ``redback_api/plot_redback.py`` puts in its legend, and
-    the one the NMMA comparison figures carry, so the two can be read side by
-    side.
-
-    It is a **diagnostic computed after the fit**, not the quantity the
-    sampler maximised: redback returns a posterior, so this takes the median
-    of the draws rather than a maximum-likelihood row. Close to NMMA's number
-    but not identical to it.
-
-    ``errors`` must be the same sigma the likelihood used. With the default
-    likelihood those are the photometric errors; add a systematic in
-    quadrature there and this has to follow, or the legend and the inference
-    stop describing the same fit.
-
-    Returns
-    -------
-    float or None
-        None when nothing finite is left to compare.
-    """
-    if draws is None or observed.size == 0:
-        return None
-    median = np.median(draws, axis=0)
-    finite = np.isfinite(median) & np.isfinite(observed) & (errors > 0)
-    if finite.sum() == 0:
-        return None
-    residual = (observed[finite] - median[finite]) / errors[finite]
-    return float(np.sum(residual**2) / finite.sum())
-
-
 def effective_errors(cfg, result, errors, draws):
     """The sigma the chosen likelihood actually used, per point.
 
     With ``--likelihood upper-limits`` this is the photometric error and the
     array comes back untouched. The two budget likelihoods sample a ``sigma``
-    on top of it, so the residual strip and the chi-square have to widen by the
-    same amount, or the figure would report a bad fit that the inference never
-    saw.
+    on top of it, so the residual strip has to widen by the same amount, or the
+    figure would show a bad fit that the inference never saw.
 
     The formulae are redback's own, as :data:`redback_models.LIKELIHOODS`
     records them: ``quadrature`` adds a constant in magnitudes, ``systematic``
@@ -660,15 +629,7 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
             )
         main.invert_yaxis()
 
-        # NMMA computes its chi-square from the best-fit row it exports;
-        # redback exports a posterior, not a maximum-likelihood row, so this
-        # takes the median of the draws. Divided by sigma_eff, not by the
-        # photometric error, so it matches whichever --likelihood ran.
-        chi2 = reduced_chi_square(magnitudes[seen], sigma_eff, at_data)
-        title = nice_band_name(band)
-        if chi2 is not None:
-            title += rf":  $\chi^2/\mathrm{{d.o.f.}} = {chi2:.2f}$"
-        _style(figure, main, theme, title=title)
+        _style(figure, main, theme, title=nice_band_name(band))
         _style(figure, residual, theme)
         main.set_ylabel("AB magnitude", fontsize=8)
         legend = main.legend(

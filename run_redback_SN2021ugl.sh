@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# SN2021ugl, Type IIb. Copy any block below, or run this file.
+# SN2021ugl (Type IIb) and SN2020oi, at the end. Copy any block below, or run
+# this file. Every block is self-contained; the export below is the only
+# shared line and is what pymultinest needs.
 #
 # Every parameter is written out, including those that have a default, so a run
 # can be read without consulting --help. The defaults are:
@@ -9,9 +11,16 @@
 #                         or sncosmo_salt.prior / sncosmo_generic.prior on the
 #                         sncosmo path, by whether the template exposes x0.
 #                         Written out below so a run reads without that rule.
-#   --t0-min / --t0-max   from redback_models.T0_WINDOW, per model:
-#                         (-2, +1) for the physical models, bounding t0;
-#                         (-30, +30) for sncosmo_models, bounding peak_time
+#   --t0-min / --t0-max   NOT written out for the physical models: their
+#                         window is derived from each file's own cadence, from
+#                         the first epoch to the first detection, so there is
+#                         no fixed value to write. See redback_models.t0_window.
+#                         It is 0 to +3.99 d on SN2021ugl and 0 to +6.04 d on
+#                         SN2020oi. The sncosmo blocks keep (-30, +30), which
+#                         bounds peak_time, maximum light rather than the
+#                         explosion, and is a fixed table entry.
+#   --data-tmin/-tmax     likewise absent: their default is no cut at all, and
+#                         the pre-explosion limits are what constrain t0
 #
 # Lower --nlive to check a setup: pymultinest fits the 4-parameter template in
 # ~26 s at nlive 2048, against ~9 min for the same fit in NMMA (measured, same
@@ -19,9 +28,11 @@
 # observed epochs). dynesty is a further ~10x slower than pymultinest.
 # --plot-theme astrocolibri gives the branded figure instead of the paper one.
 #
-# Each panel title carries chi2/d.o.f., the median of the posterior draws
-# against the detections, so the figures read alongside the NMMA ones. It is a
-# diagnostic computed after the fit, not the quantity the sampler maximised.
+# Panel titles carry the band name only, unlike the NMMA figures: a reduced
+# chi-square mixes model quality with photometric precision, and on data at
+# 0.04 mag it reads as a failure for a fit accurate to 0.13 mag. The residual
+# strip under each panel shows the same thing per epoch, signed, which is what
+# makes a systematic trend visible.
 #
 # Extinction. --ra/--dec let the fit query the Planck GNILC dust map itself and
 # bound av_mw at R_V x E(B-V); pass --ebv-mw to set that bound by hand instead.
@@ -73,7 +84,7 @@
 # file:  sigma = DeltaFunction(peak=0.25, name='sigma')
 #
 # When a budget runs it appears in the figure: the wider faint bar behind each
-# point, with the residual strip and the chi-square divided by that same sigma.
+# point, with the residual strip divided by that same sigma.
 # On SN2021ugl, quadrature measures sigma = 0.073 mag against photometric
 # errors already at 0.113, so the budget is real but small. The default keeps
 # the limits, which are 23 of 65 points and bound t0 from above.
@@ -102,8 +113,6 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
   --data data/processed/SN2021ugl.dat \
   --model shock_cooling_and_arnett \
   --priors priors_redback/shock_cooling_and_arnett.prior \
-  --t0-min -2.0 \
-  --t0-max 1.0 \
   --upper-limit-sigma 3.0 \
   --likelihood upper-limits \
   --nlive 2048 \
@@ -233,3 +242,75 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
   --sampler pymultinest \
   --generation-seed 42 \
   --use-Ebv --Ebv-max 0.0637
+
+
+
+# ===========================================================================
+# SN2020oi, a second target. Arnett alone, which is the model that carries a
+# nickel fraction, so M_Ni = f_nickel x mej comes out of this one.
+#
+# Its data come from an Astro-COLIBRI CSV rather than the ZTF ingest, so they
+# were converted separately: 25 rows kept of 58, the 33 the file flags 'bad'
+# dropped on Astro-COLIBRI's own call and never rewritten. What is left is
+# ztfg 9 detections + 2 limits, ztfr 10 + 4. The converter is not in this
+# repository; src/ingest/fetch_ztf.py writes the same format but cannot read
+# that CSV, since it discards every row whose 'mag' is empty, which is every
+# upper limit (their value sits in 'mag_ul').
+#
+# No --t0-min/--t0-max: the window is derived from this file's own cadence,
+# [58849.503, 58855.542], i.e. from the first epoch to the first detection,
+# 6.04 d apart here against 3.99 d on SN2021ugl. The fixed (-2, +1) this file
+# used to carry would have put t0 entirely before the deep g > 20.55 limit
+# that rules it out.
+#
+# --ebv-mw 0.03 is a raw SFD-family value, NOT scaled by the Schlafly &
+# Finkbeiner (2011) factor 0.86. Left raw deliberately: redback uses it as an
+# upper bound on a marginalised av_mw, never as a value, so the larger number
+# merely widens what the data may choose and the tighter one risks clipping.
+# The 14% is worth 0.0154 mag in g, well under this object's 0.03-0.07 mag
+# photometric errors. Note fit_nmma.py does apply 0.86 to its own SFD bound,
+# so a side-by-side NMMA run would bound at 0.0258 rather than 0.03.
+#
+# --ebv-mw takes precedence over a --ra/--dec map query, so no coordinates are
+# needed here.
+# ===========================================================================
+# The conversion, run once. 25 rows of 58 kept: the 33 Astro-COLIBRI flags
+# 'bad' are dropped on its own verdict. Band names are checked against
+# sncosmo's registry, so an unknown filter stops here and not hours into a fit.
+.venv-redback/bin/python src/ingest/astrocolibri_csv.py \
+  --object SN2020oi \
+  --csv Astro-COLIBRI_SN2020oi_lightcurve_2019-12-31_2020-06-30_created2026-11-05_ZTF_LSST.csv
+
+.venv-redback/bin/python src/fitting/redback-fit/fit_redback.py \
+  --object SN2020oi \
+  --data data/processed/SN2020oi.dat \
+  --model arnett \
+  --priors priors_redback/arnett.prior \
+  --ebv-mw 0.03 \
+  --upper-limit-sigma 3.0 \
+  --likelihood upper-limits \
+  --nlive 512 \
+  --sampler pymultinest \
+  --seed 42 \
+  --plot-theme print \
+  --sigma-sys-max 0.3 \
+  --likelihood quadrature \
+  --detections-only --sigma-sys-max 0.3 \
+  --plot-theme print \
+  --outdir results/redback/sca-test2
+
+
+.venv-redback/bin/python src/fitting/redback-fit/fit_redback.py \
+  --object SN2020oi \
+  --data data/processed/SN2020oi.dat \
+  --model shock_cooling_and_arnett \
+  --priors priors_redback/shock_cooling_and_arnett.prior \
+  --ebv-mw 0.03 \
+  --likelihood quadrature \
+  --detections-only \
+  --sigma-sys-max 0.3 \
+  --nlive 512 \
+  --sampler pymultinest \
+  --seed 42 \
+  --plot-theme print \
+  --outdir results/redback/sca-test2

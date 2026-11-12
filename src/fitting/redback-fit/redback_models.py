@@ -232,6 +232,64 @@ def time_parameter(name: str) -> str:
     return "peak_time" if name == SNCOSMO_MODEL else "t0"
 
 
+def t0_window(
+    name: str,
+    reference_mjd: float | None = None,
+    first_detection_mjd: float | None = None,
+) -> tuple[float, float]:
+    """The t0 prior window in days from the first epoch, derived from the data.
+
+    :data:`T0_WINDOW` is a fixed table, and a fixed table cannot be right for
+    every target: the gap between the first epoch of a file and its first
+    detection is a property of the observing cadence, not of the model. It is
+    3.99 d on SN2021ugl and 6.04 d on SN2020oi, so the same ``(-2, +1)`` lands
+    on a different part of the light curve each time, and on SN2020oi it places
+    t0 entirely before the deep pre-explosion limit that rules it out.
+
+    Both bounds come from the data instead, with no per-target tuning:
+
+    - the upper bound is the **first detection**. A transient has exploded
+      before it is seen, and ``t0_base_model`` returns 1000 mag before ``t0``,
+      so anything later is dead prior volume: it costs ln Z an Occam factor
+      with no support from the data.
+    - the lower bound is the **first epoch** of the file. There is no
+      information before the data start. A posterior piling up against this
+      edge is the signal that the explosion may predate the file, and it is
+      visible in the figure rather than hidden.
+
+    Models in :data:`_NO_PHASE_MODEL` keep the fixed table: their time
+    parameter is ``peak_time``, maximum light rather than explosion, which the
+    first detection does not bound at all and which may fall on either side of
+    it.
+
+    Falls back to the table when the caller passes no epochs, and when the
+    first epoch *is* the first detection: the file then carries nothing before
+    the transient, so the model's own slack is all there is to go on, capped at
+    the detection.
+
+    Parameters
+    ----------
+    name : str
+        Base model key.
+    reference_mjd, first_detection_mjd : float, optional
+        From :func:`redback_data.first_epoch_mjd` and
+        :func:`redback_data.first_detection_mjd`.
+
+    Returns
+    -------
+    tuple of float
+        ``(t0_min, t0_max)``, days relative to ``reference_mjd``.
+    """
+    fallback = T0_WINDOW[name]
+    if name in _NO_PHASE_MODEL or reference_mjd is None or first_detection_mjd is None:
+        return fallback
+
+    span = float(first_detection_mjd) - float(reference_mjd)
+    if span <= 0.0:
+        return (fallback[0], 0.0)
+    return (0.0, span)
+
+
 def sncosmo_source_parameters(template: str) -> tuple[str, ...]:
     """The template's own parameters, read from sncosmo rather than tabulated.
 

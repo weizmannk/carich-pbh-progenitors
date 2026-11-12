@@ -6,11 +6,16 @@ Usage:
 What is sampled
 ---------------
 ``t0`` is sampled as an absolute MJD, redback's own parameterisation, which
-``t0_base_model`` requires, inside a window anchored on the first detection
-(``redback_models.T0_WINDOW``), the way redback's own examples anchor theirs.
-Fixing it would understate every other uncertainty, and the pre-explosion upper
-limits are what constrain it, which is why ``--data-tmin`` defaults to keeping
-them.
+``t0_base_model`` requires. Its window is **derived from the data**, not from a
+table: from the first epoch of the file to the first detection
+(``redback_models.t0_window``). Both bounds are generic -- a transient explodes
+before it is seen, and nothing is known before the file starts -- so no target
+needs tuning. ``--t0-min``/``--t0-max`` override it when a target genuinely
+needs it.
+
+Pinning ``t0`` would understate every other uncertainty, and the pre-explosion
+upper limits are what constrain it, which is why ``--data-tmin`` defaults to
+keeping them.
 
 ``redshift`` is fixed (``--z-known``), Gaussian (``--z-phot``), or sampled on
 redback's own prior when neither is given, optional, as on the NMMA side.
@@ -68,17 +73,22 @@ import numpy as np
 import plot_redback
 import redback
 from model_descriptions import describe
-from redback_data import build_transient, first_epoch_mjd, read_photometry
+from redback_data import (
+    build_transient,
+    first_detection_mjd,
+    first_epoch_mjd,
+    read_photometry,
+)
 from redback_models import (
     DEFAULT_LIKELIHOOD,
     LIKELIHOODS,
     MODELS,
     SNCOSMO_MODEL,
-    T0_WINDOW,
     likelihood_class,
     model_kwargs,
     observed_model,
     sncosmo_prior_stem,
+    t0_window,
     time_parameter,
 )
 from redback_priors import build_priors, extinction_summary
@@ -232,8 +242,9 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=None,
         dest="t0_min",
-        help="Earliest t0, days relative to the first detection (negative = "
-        "before it). Default: T0_WINDOW",
+        help="Earliest t0, days relative to the first epoch of the data file, "
+        "not the first detection (negative = before it). Default: derived "
+        "from the data, see redback_models.t0_window",
     )
     parser.add_argument(
         "--t0-max",
@@ -290,8 +301,9 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=None,
         dest="data_tmin",
-        help="Keep photometry from this many days relative to the first detection "
-        "(negative keeps the pre-explosion limits, which constrain t0)",
+        help="Keep photometry from this many days relative to the first epoch "
+        "of the data file (negative keeps the pre-explosion limits, which "
+        "constrain t0)",
     )
     parser.add_argument(
         "--data-tmax",
@@ -400,7 +412,20 @@ def resolve_config(args: argparse.Namespace) -> RunConfig:
         default_prior = repo_root() / "priors_redback" / f"{stem}.prior"
         priors = default_prior if default_prior.exists() else None
 
-    window = T0_WINDOW[args.model]
+    # Derived from this file's own cadence, not from a fixed table: see
+    # redback_models.t0_window. --t0-min/--t0-max still override it.
+    #
+    # The --detections-only cut has to be applied HERE too, not only where the
+    # transient is built. The window is a pair of offsets, and the epoch they
+    # are offsets from is the first row of whatever is actually fitted. Reading
+    # the full file here while the fit sees the filtered one shifted the window
+    # by the gap between the first limit and the first detection -- 6.04 d on
+    # SN2020oi -- and so placed t0 *after* the first detection, where
+    # t0_base_model returns its 1000 mag sentinel for every earlier epoch.
+    rows = read_photometry(datafile)
+    if args.detections_only:
+        rows = [row for row in rows if row["detected"]]
+    window = t0_window(args.model, first_epoch_mjd(rows), first_detection_mjd(rows))
     ebv_mw, ebv_source = resolve_extinction(args)
 
     return RunConfig(
@@ -476,6 +501,46 @@ def build_likelihood(cfg, transient, model_kwargs_dict):
         function=observed_model(cfg.model),
         kwargs=model_kwargs_dict,
     )
+
+
+def warn_if_sigma_railed(result, cfg) -> bool:
+    """Say so when the sampled systematic piles against --sigma-sys-max.
+
+    A railed sigma is a silent failure: the budget is clipped, so the
+    likelihood cannot widen far enough, every chi-square stays inflated and
+    M_Ni's interval is understated -- yet nothing in the output looks wrong.
+    Measured on SN2020oi at a 0.25 ceiling, the posterior sat at 0.241 with
+    54% of its mass in the last 4% of the prior.
+
+    Raising the ceiling is not automatically the answer. A systematic of half
+    a magnitude is not a nuisance term, it is the model failing to describe
+    the data, and a budget that large makes the chi-square look healthy while
+    the evidence stops meaning anything for model comparison.
+
+    Returns
+    -------
+    bool
+        Whether the posterior is railed.
+    """
+    if "sigma" not in result.posterior:
+        return False
+    samples = result.posterior["sigma"].to_numpy()
+    ceiling = float(cfg.sigma_sys_max)
+    railed = float(np.mean(samples > 0.95 * ceiling)) > 0.5
+    if railed:
+        logger.warning(
+            "sigma is railed against --sigma-sys-max: median %.3f of a %.3f "
+            "ceiling, %.0f%% of the posterior in its top 5%%. The budget is "
+            "clipped, so every chi-square here is inflated and M_Ni's "
+            "interval is too narrow. Raising the ceiling will fit better, but "
+            "if it settles near half a magnitude the honest reading is that "
+            "%s does not describe this light curve.",
+            float(np.median(samples)),
+            ceiling,
+            100.0 * float(np.mean(samples > 0.95 * ceiling)),
+            cfg.model,
+        )
+    return railed
 
 
 def nickel_mass(posterior) -> dict:
@@ -575,6 +640,7 @@ def summarise(result, cfg: RunConfig, transient, priors) -> dict:
             if "sigma" in result.posterior
             else None
         ),
+        "sigma_sys_railed": warn_if_sigma_railed(result, cfg),
         "n_detections": n_detections,
         "n_upper_limits": n_total - n_detections,
         "constraints": sorted(
