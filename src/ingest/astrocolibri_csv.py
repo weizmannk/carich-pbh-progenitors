@@ -33,6 +33,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from carich._paths import DATA
+
 logger = logging.getLogger(__name__)
 
 #: Rows to keep. Everything else is Astro-COLIBRI's own quality verdict and is
@@ -59,10 +61,6 @@ def parse_args() -> argparse.Namespace:
         help="Default: data/processed/",
     )
     return parser.parse_args()
-
-
-def repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
 
 
 def known_band(band: str) -> bool:
@@ -149,7 +147,7 @@ def main() -> None:
     frame = pd.read_csv(args.csv)
     rows = to_dat_rows(frame)
 
-    outdir = args.outdir or repo_root() / "data" / "processed"
+    outdir = args.outdir or DATA / "processed"
     path = outdir / f"{args.object}.dat"
     write_dat(rows, path)
 

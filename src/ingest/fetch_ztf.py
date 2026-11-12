@@ -26,6 +26,8 @@ import numpy as np
 import pandas as pd
 from astropy.time import Time
 
+from carich._paths import DATA
+
 logger = logging.getLogger(__name__)
 
 #: Broker filter id -> the band name redback's filter table expects.
@@ -74,11 +76,6 @@ def parse_args() -> argparse.Namespace:
         help="Default: data/processed/ at the repository root",
     )
     return parser.parse_args()
-
-
-def repo_root() -> Path:
-    """Repository root, from this file's location."""
-    return Path(__file__).resolve().parents[2]
 
 
 def fetch_from_broker(name: str, broker: str, transient_type: str) -> pd.DataFrame:
@@ -213,7 +210,7 @@ def main() -> None:
         frame = fetch_from_broker(args.object, args.broker, args.transient_type)
 
     rows = apply_window(to_dat_rows(frame), args.tmax)
-    outdir = args.outdir or repo_root() / "data" / "processed"
+    outdir = args.outdir or DATA / "processed"
     path = outdir / f"{args.object}.dat"
     write_dat(rows, path)
 

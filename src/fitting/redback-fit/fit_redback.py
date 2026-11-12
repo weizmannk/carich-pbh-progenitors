@@ -93,6 +93,8 @@ from redback_models import (
 )
 from redback_priors import build_priors, extinction_summary
 
+from carich._paths import DATA, PRIORS_REDBACK, root
+
 logger = logging.getLogger(__name__)
 
 
@@ -341,11 +343,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def repo_root() -> Path:
-    """Repository root, from this file's location."""
-    return Path(__file__).resolve().parents[3]
-
-
 def resolve_extinction(args: argparse.Namespace) -> tuple[float, str]:
     """Milky Way E(B-V) and where it came from.
 
@@ -370,7 +367,7 @@ def resolve_extinction(args: argparse.Namespace) -> tuple[float, str]:
         )
         return 0.0, "none"
 
-    sys.path.insert(0, str(repo_root() / "src" / "ingest"))
+    sys.path.insert(0, str(root() / "src" / "ingest"))
     try:
         from mw_extinction import get_planck_ebv
 
@@ -382,7 +379,7 @@ def resolve_extinction(args: argparse.Namespace) -> tuple[float, str]:
 
 def resolve_config(args: argparse.Namespace) -> RunConfig:
     """Fill in every default that depends on the repository layout."""
-    datafile = args.data or repo_root() / "data" / "processed" / f"{args.object}.dat"
+    datafile = args.data or DATA / "processed" / f"{args.object}.dat"
     if not datafile.exists():
         raise SystemExit(f"Photometry not found: {datafile}")
 
@@ -409,7 +406,7 @@ def resolve_config(args: argparse.Namespace) -> RunConfig:
             if args.model == SNCOSMO_MODEL
             else args.model
         )
-        default_prior = repo_root() / "priors_redback" / f"{stem}.prior"
+        default_prior = PRIORS_REDBACK / f"{stem}.prior"
         priors = default_prior if default_prior.exists() else None
 
     # Derived from this file's own cadence, not from a fixed table: see

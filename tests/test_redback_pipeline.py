@@ -20,16 +20,17 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "src" / "fitting" / "redback-fit"))
+from carich._paths import DATA, PRIORS_REDBACK, root
+
+sys.path.insert(0, str(root() / "src" / "fitting" / "redback-fit"))
 
 import redback_data as rd  # noqa: E402
 import redback_models as rm  # noqa: E402
 import redback_priors  # noqa: E402
 
 CONSTRAINED_MODELS = ("slsn", "tde_analytical", "cooling_envelope")
-DATAFILE = REPO_ROOT / "data" / "processed" / "SN2021ugl.dat"
-PRIOR_DIR = REPO_ROOT / "priors_redback"
+DATAFILE = DATA / "processed" / "SN2021ugl.dat"
+PRIOR_DIR = PRIORS_REDBACK
 REFERENCE_MJD = rd.first_epoch_mjd(rd.read_photometry(DATAFILE))
 
 
@@ -1482,7 +1483,7 @@ def test_t0_window_falls_back_without_epochs():
 @pytest.mark.parametrize("name", ["SN2021ugl"])
 def test_t0_window_never_allows_t0_after_the_first_detection(name):
     """The one invariant worth a guard: a transient explodes before it is seen."""
-    rows = rd.read_photometry(REPO_ROOT / "data" / "processed" / f"{name}.dat")
+    rows = rd.read_photometry(DATA / "processed" / f"{name}.dat")
     reference = rd.first_epoch_mjd(rows)
     detection = rd.first_detection_mjd(rows)
     for model in rm.MODELS:
