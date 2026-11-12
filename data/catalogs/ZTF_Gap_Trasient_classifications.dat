@@ -1,0 +1,436 @@
+source_name	classification	probability	ra	dec	redshift	fritz_link
+ZTF22aboisvs	Ia	1.0	132.1189456	1.3973116	0.051454	https://fritz.science/source/ZTF22aboisvs
+ZTF21aawxqia	Ia	0.99878	121.6827638	54.4780523	0.032588	https://fritz.science/source/ZTF21aawxqia
+ZTF21acbuwgu	Ia	1.0	331.1592263	-20.2385851	0.053277	https://fritz.science/source/ZTF21acbuwgu
+ZTF20acsfdnn	Ia	1.0	170.7598937	34.1525439	0.09	https://fritz.science/source/ZTF20acsfdnn
+ZTF21acjateh	Type II	1.0	187.4464708	27.2549489	0.02466	https://fritz.science/source/ZTF21acjateh
+ZTF20aciuftf	Ia		117.9453531	16.6236959	0.133	https://fritz.science/source/ZTF20aciuftf
+ZTF21ababpoq	IIb	0.7	126.8615093	17.2870555	0.0198	https://fritz.science/source/ZTF21ababpoq
+ZTF21acpoujw	IIn	1.0	175.8736977	-16.7972175	0.012255	https://fritz.science/source/ZTF21acpoujw
+ZTF22aadmgan	Ia	0.999	162.7407632	-2.1498104	0.015	https://fritz.science/source/ZTF22aadmgan
+ZTF21aabhtlj	Ia	0.8	5.3948404	38.0936788	0.036399	https://fritz.science/source/ZTF21aabhtlj
+ZTF19acygpcu	Ia-02cx		110.1483074	55.7704307	0.0635	https://fritz.science/source/ZTF19acygpcu
+ZTF21abbewsz	Ia	1.0	192.3462295	-4.1257346	0.0746	https://fritz.science/source/ZTF21abbewsz
+ZTF21aaqupdt	Ia	0.93944	236.7682498	6.1106985	0.080522	https://fritz.science/source/ZTF21aaqupdt
+ZTF20abcuigh	Ia		220.15310355	-0.45938670000000004	0.111619	https://fritz.science/source/ZTF20abcuigh
+ZTF21abcgnql	Ib	0.99	234.0278934	43.4058996	0.017578	https://fritz.science/source/ZTF21abcgnql
+ZTF20actvgsy	Ia	1.0	139.6996146	30.3545922	0.10196	https://fritz.science/source/ZTF20actvgsy
+ZTF21abmwgow	Ia	1.0	332.937582	-18.1290872	0.068	https://fritz.science/source/ZTF21abmwgow
+ZTF22abrcivs	Ia	0.99802	74.0234323	1.8185835	0.033	https://fritz.science/source/ZTF22abrcivs
+ZTF20acynqpx	IIP	1.0	30.4743361	23.5504434	0.041524146	https://fritz.science/source/ZTF20acynqpx
+ZTF20acxmxth	Ia	1.0	347.9114617	7.7803698	0.04	https://fritz.science/source/ZTF20acxmxth
+ZTF22aaibhya	Ia	0.97451	133.7217588	39.4437697	0.085511	https://fritz.science/source/ZTF22aaibhya
+ZTF21aagnwkk	Ia-03fg	0.3	141.9879607	12.7913142	0.113	https://fritz.science/source/ZTF21aagnwkk
+ZTF21abfrbsj	Type II	0.9998	357.0149928	-2.4056183	0.021278	https://fritz.science/source/ZTF21abfrbsj
+ZTF20acoplqe	Type II	0.99	312.0416245	-1.2111928	0.05633	https://fritz.science/source/ZTF20acoplqe
+ZTF22aalmqrv	Ia	0.8	162.2871073	42.9157082	0.074181	https://fritz.science/source/ZTF22aalmqrv
+ZTF21abidhcz	Novae	0.5	194.2262745	21.6820251	0.001361	https://fritz.science/source/ZTF21abidhcz
+ZTF20actodrq	Type II	1.0	193.7391436	-13.5415481	0.007	https://fritz.science/source/ZTF20actodrq
+ZTF22abswuoz	Ia	0.999	152.0025093	39.257912	0.07	https://fritz.science/source/ZTF22abswuoz
+ZTF22aaaepck	Type II	0.99	241.5572768	17.9556383	0.038587	https://fritz.science/source/ZTF22aaaepck
+ZTF19accavuw	Ia-pec		3.7759394	14.2392537	0.043	https://fritz.science/source/ZTF19accavuw
+ZTF22abrredj	Ia	0.93	165.7450517	32.2590098	0.059323	https://fritz.science/source/ZTF22abrredj
+ZTF21abrxdrk	Ia	1.0	350.013357	0.3389968	0.1	https://fritz.science/source/ZTF21abrxdrk
+ZTF21acpaqyp	Ia	0.99413	133.3671845	30.2775521	0.071339	https://fritz.science/source/ZTF21acpaqyp
+ZTF20abcawtk	Ia	1.0	243.5350859	30.042996	0.09436009	https://fritz.science/source/ZTF20abcawtk
+ZTF22aafnqtw	Ia	0.98576	127.1168542	30.834696	0.05013	https://fritz.science/source/ZTF22aafnqtw
+ZTF21abowpnd	Ia	0.96325	231.8599601	28.8454735	0.061306	https://fritz.science/source/ZTF21abowpnd
+ZTF20acoqrpm	Classical Nova	0.99	10.58401	41.2410797	0.00017	https://fritz.science/source/ZTF20acoqrpm
+ZTF21aaomuka	Ia	1.0	169.5228416	18.7996913	0.08057	https://fritz.science/source/ZTF21aaomuka
+ZTF22aamwveh	IIP	1.0	333.6230495	5.0264822	0.028066	https://fritz.science/source/ZTF22aamwveh
+ZTF22aadeqoe	Ia	0.96833	243.8993207	61.697805	0.088	https://fritz.science/source/ZTF22aadeqoe
+ZTF20aclfmwn	IIb	1.0	124.2972935	64.5263538	0.038	https://fritz.science/source/ZTF20aclfmwn
+ZTF21abovafi	Type II	1.0	36.8828638	-10.1664115	0.007	https://fritz.science/source/ZTF21abovafi
+ZTF21abmdhes	Ia	0.96682	19.5024428	-1.5793686	0.04	https://fritz.science/source/ZTF21abmdhes
+ZTF22aaowkts	Ia	0.99983	203.8619592	56.4066611	0.0420189984	https://fritz.science/source/ZTF22aaowkts
+ZTF21aabkyvc	Type II	1.0	109.5691658	17.689784	0.074	https://fritz.science/source/ZTF21aabkyvc
+ZTF22aaaygaj	Ia	0.99	213.4091427	50.107976	0.08	https://fritz.science/source/ZTF22aaaygaj
+ZTF22abvdwik	Ia	1.0	16.9343988	32.4447053	0.11	https://fritz.science/source/ZTF22abvdwik
+ZTF21abulrsl	Ia-91bg	0.6	72.76726	-5.9569376	0.0478	https://fritz.science/source/ZTF21abulrsl
+ZTF20acpkqhq	Ia	1.0	9.0479924	-23.6599724	0.09	https://fritz.science/source/ZTF20acpkqhq
+ZTF21abvwuzb	Ia-norm	1.0	73.0788441	-3.1072703	0.0146	https://fritz.science/source/ZTF21abvwuzb
+ZTF19achahea	Ia-91bg	1.0	124.6482586	56.571874	0.045347	https://fritz.science/source/ZTF19achahea
+ZTF21aalikvj	Ia-02cx	1.0	186.3812106	3.4370438	0.026572	https://fritz.science/source/ZTF21aalikvj
+ZTF21acknxoo	Ia	0.88	18.5925874	-26.7284393	0.1029	https://fritz.science/source/ZTF21acknxoo
+ZTF21abdkojo	Ib-norm	1.0	206.1043197	20.418996	0.02698	https://fritz.science/source/ZTF21abdkojo
+ZTF21aadloxe	Ia	1.0	29.3965577	19.8786365	0.029454	https://fritz.science/source/ZTF21aadloxe
+ZTF21aadahyi	Ia	1.0	170.9046596	-5.5324222	0.0972	https://fritz.science/source/ZTF21aadahyi
+ZTF21acpuwxj	Ia	0.97973	130.5498212	52.7676189	0.04462	https://fritz.science/source/ZTF21acpuwxj
+ZTF22abbirsn	Ia	0.96671	5.7683929	21.2340697	0.089	https://fritz.science/source/ZTF22abbirsn
+ZTF20aabcnkx	Ia	1.0	63.358404	-5.603504	0.097	https://fritz.science/source/ZTF20aabcnkx
+ZTF22aalyfii	Ia	0.99977	166.543419	31.613724	0.0467	https://fritz.science/source/ZTF22aalyfii
+ZTF21aapkbav	IIb	1.0	217.0305269	33.4970217	0.036	https://fritz.science/source/ZTF21aapkbav
+ZTF22aagzmcz	Ic	0.8	196.5607063	25.4614979	0.0242	https://fritz.science/source/ZTF22aagzmcz
+ZTF22abqdmwt	Ia	0.77	28.2882123	-14.1402038	0.065	https://fritz.science/source/ZTF22abqdmwt
+ZTF22aaecoej	Ia	0.99	203.7542904	-8.0634389	0.09	https://fritz.science/source/ZTF22aaecoej
+ZTF22abbpvzk	Ia	0.99689	231.9405687	25.8866037	0.076	https://fritz.science/source/ZTF22abbpvzk
+ZTF22abyhqkt	Ia	0.99645	30.6643671	-7.0395986	0.047	https://fritz.science/source/ZTF22abyhqkt
+ZTF21aarrwdu	Ia	0.9	226.2532594	5.7936789	0.032012	https://fritz.science/source/ZTF21aarrwdu
+ZTF21abaiono	Ic-SLSN	0.95	146.197521	34.712294	0.065	https://fritz.science/source/ZTF21abaiono
+ZTF21aceejop	U Gem	0.999	116.4602734	56.2577871		https://fritz.science/source/ZTF21aceejop
+ZTF22abueufz	Ia	1.0	126.2297622	29.9422207	0.076512	https://fritz.science/source/ZTF22abueufz
+ZTF21aceqpgp	Type II	1.0	46.3139077	-25.8875726	0.0369	https://fritz.science/source/ZTF21aceqpgp
+ZTF22aaacdfe	Ia	1.0	135.4774039	8.6355841	0.06365	https://fritz.science/source/ZTF22aaacdfe
+ZTF22abnvupo	IIb	0.4	173.4339157	17.3994129	0.01919	https://fritz.science/source/ZTF22abnvupo
+ZTF22abfxmpc	Classical Nova	0.9	10.6251821	41.9368378	0.00017	https://fritz.science/source/ZTF22abfxmpc
+ZTF22abhjvmr	Ia	0.88	145.760426	14.1487512	0.045908	https://fritz.science/source/ZTF22abhjvmr
+ZTF21abcouxj	Ia	0.99945	201.7235061	37.7727926	0.06218	https://fritz.science/source/ZTF21abcouxj
+ZTF21aaxvekg	Ia	0.5	222.077563	13.97582	0.0289929993	https://fritz.science/source/ZTF21aaxvekg
+ZTF22aaanmsr	Ib/c	0.9	148.3960841	-12.4864668	0.024917	https://fritz.science/source/ZTF22aaanmsr
+ZTF21acizbmv	Ia	1.0	40.3043499	0.5483	0.129	https://fritz.science/source/ZTF21acizbmv
+ZTF21aarzalr	Ia	1.0	209.1010307	46.1810255	0.14	https://fritz.science/source/ZTF21aarzalr
+ZTF22abttupc	Ia	0.98434	324.8549223	0.8209577	0.086	https://fritz.science/source/ZTF22abttupc
+ZTF21abpqwkz	Type II	1.0	356.8826841	-2.4244166	0.021	https://fritz.science/source/ZTF21abpqwkz
+ZTF22abexdnd	Ic	0.99	126.7732045	21.6428614	0.025149	https://fritz.science/source/ZTF22abexdnd
+ZTF22aaebkwd	Ib	0.999	210.8214043	24.644174	0.0354	https://fritz.science/source/ZTF22aaebkwd
+ZTF19aawhlcn	Ia-02cx	1.0	219.4386175	52.7268033	0.011288	https://fritz.science/source/ZTF19aawhlcn
+ZTF20acwphqb	Ia	0.7	180.562244	14.3117502	0.08	https://fritz.science/source/ZTF20acwphqb
+ZTF21aaazieb	Ia	0.99	350.6651834	20.6593753	0.03838547	https://fritz.science/source/ZTF21aaazieb
+ZTF20aamovgw	Type I	0.8	9.4173826	37.6259823	0.11	https://fritz.science/source/ZTF20aamovgw
+ZTF22abqxkhd	Ia	0.2	20.5508461	0.956554	0.007552	https://fritz.science/source/ZTF22abqxkhd
+ZTF21abqvykn	Ia-91bg	1.0	29.1356317	3.8603814	0.055	https://fritz.science/source/ZTF21abqvykn
+ZTF20abnngbz	Ia		37.978416	3.1255996	0.032109	https://fritz.science/source/ZTF20abnngbz
+ZTF21aarbhhp	Type II	1.0	153.4439908	-0.9085651	0.0424729995	https://fritz.science/source/ZTF21aarbhhp
+ZTF21abdphiv	Ia	1.0	188.5341587	3.8246717	0.084095	https://fritz.science/source/ZTF21abdphiv
+ZTF22aaialae	Type II	0.1	134.1978184	29.9228183	0.033047	https://fritz.science/source/ZTF22aaialae
+ZTF21acbpbia	Ia	0.99372	248.057449	27.2659406	0.072637	https://fritz.science/source/ZTF21acbpbia
+ZTF21aarzrst	Ia	1.0	216.762825	33.5588672	0.15	https://fritz.science/source/ZTF21aarzrst
+ZTF21accyvil	Ia	0.999	46.7690057	-15.4263072	0.0715	https://fritz.science/source/ZTF21accyvil
+ZTF20acycunv	IIP	1.0	6.4347649	-8.4202119	0.0333900005	https://fritz.science/source/ZTF20acycunv
+ZTF23aafvgyf	Ia	0.9879	194.3334869	-17.1315628	0.047309	https://fritz.science/source/ZTF23aafvgyf
+ZTF22aaafdna	Ia	0.99	187.1394198	8.8706943	0.089	https://fritz.science/source/ZTF22aaafdna
+ZTF19acenjem	Ia		263.3513698	67.8696147	0.126	https://fritz.science/source/ZTF19acenjem
+ZTF21aakilyd	Icn	1.0	216.5921689	5.8591953	0.084	https://fritz.science/source/ZTF21aakilyd
+ZTF21aaqprjz	Ia	1.0	195.9660374	-3.4518184	0.08164	https://fritz.science/source/ZTF21aaqprjz
+ZTF22aaahjsi	Ia	0.3	131.4551499	10.3813463	0.047694	https://fritz.science/source/ZTF22aaahjsi
+ZTF22abghpvo	IIb	0.12	64.1165897	-25.0570068	0.041919	https://fritz.science/source/ZTF22abghpvo
+ZTF21aaaytny	Ia	1.0	240.4395905	18.0192576	0.045917	https://fritz.science/source/ZTF21aaaytny
+ZTF20aavbeku	Ia		183.6545178	24.3043889	0.02254	https://fritz.science/source/ZTF20aavbeku
+ZTF21aaxtjvm	Ia	1.0	191.7737136	71.3305954	0.107	https://fritz.science/source/ZTF21aaxtjvm
+ZTF21achyvno	Ia	0.93789	138.1494485	34.8550482	0.06146	https://fritz.science/source/ZTF21achyvno
+ZTF20abaunmw	Ia-02cx	1.0	197.9149382	22.9155902	0.008736	https://fritz.science/source/ZTF20abaunmw
+ZTF22abkpgye	IIb	0.3	69.1635289	-2.2852035	0.0325	https://fritz.science/source/ZTF22abkpgye
+ZTF21aalxurs	Ia	1.0	200.5109864	54.6909873	0.079359	https://fritz.science/source/ZTF21aalxurs
+ZTF21aaglret	Ia	1.0	92.8195424	-23.5598091	0.063	https://fritz.science/source/ZTF21aaglret
+ZTF21abcyzzi	Ia	0.4	255.4182431	37.8530111	0.13	https://fritz.science/source/ZTF21abcyzzi
+ZTF22abtecxe	Ic	0.1	340.1193171	16.0114331	0.0252	https://fritz.science/source/ZTF22abtecxe
+ZTF21aaarlbp	Novae	1.0	23.341635	30.5503532	0.0002	https://fritz.science/source/ZTF21aaarlbp
+ZTF21aarzsnt	Ia	1.0	216.5848922	33.4810835	0.21	https://fritz.science/source/ZTF21aarzsnt
+ZTF22aaombjf	Classical Nova	0.999	11.6391561	41.7597619	0.00017	https://fritz.science/source/ZTF22aaombjf
+ZTF22abhyzjq	Ia	0.999	333.4299928	14.2091618	0.09	https://fritz.science/source/ZTF22abhyzjq
+ZTF21acfflog	Ia	1.0	9.2847725	25.6937567	0.032246	https://fritz.science/source/ZTF21acfflog
+ZTF21aalcrjh	Novae	1.0	194.1987241	21.6479827	0.001361	https://fritz.science/source/ZTF21aalcrjh
+ZTF21acprymk	Ia	0.93484	276.3907506	35.8797526	0.067	https://fritz.science/source/ZTF21acprymk
+ZTF21abfjdev	IIP	0.9	166.3978941	19.6894212	0.031599	https://fritz.science/source/ZTF21abfjdev
+ZTF22abdvqqn	Ia-norm	1.0	115.1197698	13.8756597	0.02907	https://fritz.science/source/ZTF22abdvqqn
+ZTF19abciuew	Ia		275.6141882	51.099271900000005		https://fritz.science/source/ZTF19abciuew
+ZTF21aagtqug	Ia	0.99	250.8363301	61.5948185	0.019247	https://fritz.science/source/ZTF21aagtqug
+ZTF21abrnaub	varstar	0.99	11.2866662	41.646341	0.0002	https://fritz.science/source/ZTF21abrnaub
+ZTF20acfsrww	Ia		240.4204249	21.3548949	0.03217	https://fritz.science/source/ZTF20acfsrww
+ZTF22aahhgue	Ia	0.96879	183.9147268	54.5125765	0.096	https://fritz.science/source/ZTF22aahhgue
+ZTF22aazuotw	Ib	0.21	12.9124869	-13.2600074	0.033557	https://fritz.science/source/ZTF22aazuotw
+ZTF22abgvdis	Ia	0.999	142.9417299	27.5441859	0.047958	https://fritz.science/source/ZTF22abgvdis
+ZTF20acphick	Ia	1.0	133.463284	29.9512436	0.0444	https://fritz.science/source/ZTF20acphick
+ZTF21aciustc	Ib	1.0	307.9290357	-12.2651125	0.02	https://fritz.science/source/ZTF21aciustc
+ZTF22aaajixo	Ia	1.0	172.5704786	-11.5930296	0.07808	https://fritz.science/source/ZTF22aaajixo
+ZTF22abvasxc	Ia	0.99753	142.3092623	26.7937592	0.046198	https://fritz.science/source/ZTF22abvasxc
+ZTF20acuimtq	Ia	1.0	160.519624	69.674599	0.069	https://fritz.science/source/ZTF20acuimtq
+ZTF22aaaeeva	Ia	1.0	221.9650067	1.8321068	0.0347	https://fritz.science/source/ZTF22aaaeeva
+ZTF20acvbvyb	Ia	1.0	46.2113567	-1.1805975	0.11048	https://fritz.science/source/ZTF20acvbvyb
+ZTF21aatpsky	Type II	1.0	179.3396314	-20.2328332	0.031	https://fritz.science/source/ZTF21aatpsky
+ZTF21aabxjqr	IIb	1.0	146.1949889	51.6874758	0.03317803	https://fritz.science/source/ZTF21aabxjqr
+ZTF22abtotgu	Ia	0.97313	186.4776923	6.7508593	0.07	https://fritz.science/source/ZTF22abtotgu
+ZTF21acojncf	Ia	0.99899	195.0095579	4.1167005	0.059	https://fritz.science/source/ZTF21acojncf
+ZTF21aahptas	Ia	0.9	200.6796025	-2.169455	0.076231	https://fritz.science/source/ZTF21aahptas
+ZTF21acipdhn	Ia	0.99009	157.5513282	78.8064881	0.079	https://fritz.science/source/ZTF21acipdhn
+ZTF21abuykoj	Ia	0.5	222.3415921	9.6752743	0.02816	https://fritz.science/source/ZTF21abuykoj
+ZTF21aaugbus	Ia	0.97921	120.6130761	70.4568379	0.03	https://fritz.science/source/ZTF21aaugbus
+ZTF22aahftli	Ibn	0.44	289.1600047	61.687634	0.032	https://fritz.science/source/ZTF22aahftli
+ZTF22aajhyin	Type II	0.999	196.1244615	3.6721792	0.03	https://fritz.science/source/ZTF22aajhyin
+ZTF22abqrdqq	Ia	0.98154	8.0505845	30.7070905	0.064	https://fritz.science/source/ZTF22abqrdqq
+ZTF21aawdral	Ia	1.0	214.743119	-2.0689727	0.134	https://fritz.science/source/ZTF21aawdral
+ZTF20aakrgsq	Ia	1.0	187.8360009	39.9774768	0.135	https://fritz.science/source/ZTF20aakrgsq
+ZTF20acwcisk	Ic	1.0	140.6628855	11.6433348	0.03819	https://fritz.science/source/ZTF20acwcisk
+ZTF20acdkfjn	Type II	1.0	144.9567085	16.9113475	0.045	https://fritz.science/source/ZTF20acdkfjn
+ZTF21abvajfq	Ia	0.98304	229.9814939	27.7266964	0.08	https://fritz.science/source/ZTF21abvajfq
+ZTF22ablbgrl	Ia	0.97629	120.9062943	26.45565	0.0478	https://fritz.science/source/ZTF22ablbgrl
+ZTF22abaxmks	Ia	0.98586	28.0939979	-9.2950294	0.111	https://fritz.science/source/ZTF22abaxmks
+ZTF22aadlpkc	Ib	0.9	158.9420229	23.3200678	0.042	https://fritz.science/source/ZTF22aadlpkc
+ZTF21abxaazp	Ia	1.0	20.1501258	3.4404545	0.101738	https://fritz.science/source/ZTF21abxaazp
+ZTF22aahhubz	Ia	0.99	186.8023877	0.9277782	0.097	https://fritz.science/source/ZTF22aahhubz
+ZTF20acqnthg	Ia	1.0	194.8616529	-2.2469439	0.04741	https://fritz.science/source/ZTF20acqnthg
+ZTF21aciwixf	Ib	1.0	9.0949384	-10.0961228	0.019644	https://fritz.science/source/ZTF21aciwixf
+ZTF20aavxraf	Ia	1.0	201.8133137	32.0336678	0.02442	https://fritz.science/source/ZTF20aavxraf
+ZTF21aaqvsvw	IIb	1.0	119.9470164	25.3558303	0.026648	https://fritz.science/source/ZTF21aaqvsvw
+ZTF22aaaedov	Ia	0.90553	217.4547693	16.8580501	0.079839	https://fritz.science/source/ZTF22aaaedov
+ZTF21abwukki	Ia	0.922	22.9247144	31.7772954	0.094	https://fritz.science/source/ZTF21abwukki
+ZTF20acjryou	Ia-norm	1.0	156.7253121	-0.5450889	0.0345650017	https://fritz.science/source/ZTF20acjryou
+ZTF22abzadkd	Ia	0.98421	156.2178883	9.5935289	0.045951	https://fritz.science/source/ZTF22abzadkd
+ZTF21abhymwh	Classical Nova	0.8	194.1609035	21.6965487	0.001361	https://fritz.science/source/ZTF21abhymwh
+ZTF20abmddts	Ia-91bg		21.434143300000002	2.43623235	0.0583	https://fritz.science/source/ZTF20abmddts
+ZTF22aayubvt	Type II	0.9	46.7769148	-5.9581582	0.019	https://fritz.science/source/ZTF22aayubvt
+ZTF22abcsgeq	Ic	0.1	41.4779312	-5.6418565	0.029367	https://fritz.science/source/ZTF22abcsgeq
+ZTF21abrzsak	II-pec	0.9	14.4470803	-27.5030625	0.018483	https://fritz.science/source/ZTF21abrzsak
+ZTF22aboaiim	Ia	1.0	80.0895875	-20.9115269	0.07	https://fritz.science/source/ZTF22aboaiim
+ZTF21acgrero	U Gem	0.99	11.1681035	41.2185433		https://fritz.science/source/ZTF21acgrero
+ZTF19abdketn	Ia		20.67133145	11.388834899999999	0.12	https://fritz.science/source/ZTF19abdketn
+ZTF20achuuaj	Type II	1.0	53.1154927	-21.5935734	0.044664	https://fritz.science/source/ZTF20achuuaj
+ZTF21aasgcve	Ia-91T	0.8	129.1674793	1.1657082	0.093	https://fritz.science/source/ZTF21aasgcve
+ZTF21aadatfx	IIP	1.0	236.3379292	25.4474567	0.032682057	https://fritz.science/source/ZTF21aadatfx
+ZTF21accqros	Type II	1.0	147.5610125	45.95621111111112	0.024921	https://fritz.science/source/ZTF21accqros
+ZTF21aapkkgx	Ia	1.0	214.4550417	5.1119514	0.081	https://fritz.science/source/ZTF21aapkkgx
+ZTF22aadkowq	Ia	0.99979	157.5379096	-1.6676831	0.037	https://fritz.science/source/ZTF22aadkowq
+ZTF22abnlwjv	Ia	0.98797	158.0676472	53.6441381	0.046586	https://fritz.science/source/ZTF22abnlwjv
+ZTF21abmzpmc	Ia	0.98675	215.5686966	23.5023916	0.104	https://fritz.science/source/ZTF21abmzpmc
+ZTF22aatemqx	Ia	1.0	244.0678227	34.8941728	0.094196	https://fritz.science/source/ZTF22aatemqx
+ZTF21ackbkoy	Ia	0.99953	270.0055916	45.1635168	0.03901	https://fritz.science/source/ZTF21ackbkoy
+ZTF21aahsgan	Ia	1.0	8.9123552	25.6773458	0.032836	https://fritz.science/source/ZTF21aahsgan
+ZTF22abtvkgk	Ia	0.9575	13.2635084	39.0264013	0.057	https://fritz.science/source/ZTF22abtvkgk
+ZTF21aasuego	Ib	1.0	195.3885328	27.8319413	0.018	https://fritz.science/source/ZTF21aasuego
+ZTF21aajtstm	Ia-02cx	1.0	187.6056806	2.1518893	0.077687	https://fritz.science/source/ZTF21aajtstm
+ZTF22aafytvb	Ia-91bg	0.9	158.7828126	27.420418	0.038	https://fritz.science/source/ZTF22aafytvb
+ZTF21aapjmda	Ia-91bg	1.0	219.5079426	10.1839959	0.026949	https://fritz.science/source/ZTF21aapjmda
+ZTF22abnbzjw	Ia-91bg	1.0	1.1623454	-8.0999346	0.028633	https://fritz.science/source/ZTF22abnbzjw
+ZTF21aagteny	Ia	1.0	184.1726686	41.0783425	0.085	https://fritz.science/source/ZTF21aagteny
+ZTF21acciklh	Ia	0.97714	334.2771471	13.3664267	0.024	https://fritz.science/source/ZTF21acciklh
+ZTF20ablstba	Ia		196.1224201	38.253210949999996	0.051	https://fritz.science/source/ZTF20ablstba
+ZTF22abqbljk	Ia	0.98395	307.8603721	-1.9785926	0.0198	https://fritz.science/source/ZTF22abqbljk
+ZTF19actnwlw	Ia		142.1763427	50.7870887	0.171	https://fritz.science/source/ZTF19actnwlw
+ZTF20acwombm	Ia	0.98	150.8405907	2.8388166	0.099054	https://fritz.science/source/ZTF20acwombm
+ZTF19abrirmk	Ia	1.0	14.5250182	-15.5585708	0.0654	https://fritz.science/source/ZTF19abrirmk
+ZTF21abboibr	Ia	0.97427	170.4432292	-5.4792433	0.059	https://fritz.science/source/ZTF21abboibr
+ZTF20acwcfvx	Ia	1.0	149.3276289	15.2364593	0.077154	https://fritz.science/source/ZTF20acwcfvx
+ZTF21acjgqjl	Ia	0.98483	41.2701332	36.7118982	0.049511	https://fritz.science/source/ZTF21acjgqjl
+ZTF22aadthro	Ia	0.8	113.1097871	27.281093	0.032759	https://fritz.science/source/ZTF22aadthro
+ZTF21aaplfah	Ia	0.99	203.2476392	32.6095846	0.035811	https://fritz.science/source/ZTF21aaplfah
+ZTF22abxayzu	Cataclysmic	0.999	94.7441039	-24.4762486		https://fritz.science/source/ZTF22abxayzu
+ZTF22aaajlae	Type II	0.22	164.780735	1.8894807	0.039	https://fritz.science/source/ZTF22aaajlae
+ZTF20aahfqpm	IIb	1.0	196.6051149	53.4792464	0.03113	https://fritz.science/source/ZTF20aahfqpm
+ZTF19abrbsvm	SLSN I		338.4753264	-2.1617414	0.1656	https://fritz.science/source/ZTF19abrbsvm
+ZTF21abifrsi	Ia	0.94601	215.2893219	2.423731	0.064	https://fritz.science/source/ZTF21abifrsi
+ZTF22aazjgoi	Ia	0.97893	5.7713103	29.2740517	0.075	https://fritz.science/source/ZTF22aazjgoi
+ZTF21aciqppd	Ia	0.99965	277.904619	30.9102607	0.029	https://fritz.science/source/ZTF21aciqppd
+ZTF21achujxq	Ibn	0.9	158.9388833	21.0553944	0.023486	https://fritz.science/source/ZTF21achujxq
+ZTF20abegopd	Ia-91bg	1.0	259.0309527	40.7865635	0.048	https://fritz.science/source/ZTF20abegopd
+ZTF22abtextj	Ia	1.0	16.5443122	1.3619517	0.0446	https://fritz.science/source/ZTF22abtextj
+ZTF22abatqod	Ia-91bg	1.0	244.125456	21.2514865	0.03688	https://fritz.science/source/ZTF22abatqod
+ZTF22aakejxf	Ia-91bg	0.9	181.1954432	9.4382701	0.068689	https://fritz.science/source/ZTF22aakejxf
+ZTF22abfuosd	Ia	0.99206	257.7581524	39.163682	0.07	https://fritz.science/source/ZTF22abfuosd
+ZTF21acfcthx	Ia	0.97894	343.4799969	-24.5040626	0.091	https://fritz.science/source/ZTF21acfcthx
+ZTF21acpwbxp	Ia	0.98268	136.9971415	52.0945273	0.063	https://fritz.science/source/ZTF21acpwbxp
+ZTF22abtoqfj	Ia	0.99054	195.6132823	75.3957143	0.03	https://fritz.science/source/ZTF22abtoqfj
+ZTF22aaacmxt	Ia	0.999	185.5547134	5.22375	0.08	https://fritz.science/source/ZTF22aaacmxt
+ZTF20acuspji	Ia	0.99	149.0411688	-9.3971565	0.055879	https://fritz.science/source/ZTF20acuspji
+ZTF21aaufwyh	Ib	0.7	155.2205333	6.1567014	0.028456	https://fritz.science/source/ZTF21aaufwyh
+ZTF22abfxmvf	Ia	0.9927	358.4047615	11.3828331	0.09	https://fritz.science/source/ZTF22abfxmvf
+ZTF20aaodnmm	Ia	1.0	223.4851908	4.7721039	0.13	https://fritz.science/source/ZTF20aaodnmm
+ZTF22aambnsg	Ia	0.99596	263.7611598	55.4185029	0.078365	https://fritz.science/source/ZTF22aambnsg
+ZTF21achqzub	Ia	1.0	351.382788	18.3740889	0.04	https://fritz.science/source/ZTF21achqzub
+ZTF21aalhrtk	Ia-91bg	0.7	164.595513	6.7132104	0.0351	https://fritz.science/source/ZTF21aalhrtk
+ZTF21acdeofq	Type II	1.0	270.3408423	65.3005899	0.016	https://fritz.science/source/ZTF21acdeofq
+ZTF22aazdxtl	Ia	1.0	41.6593156	-20.5884968	0.0663	https://fritz.science/source/ZTF22aazdxtl
+ZTF21abkinhh	Ia	1.0	212.6410259	-0.9883796	0.054027	https://fritz.science/source/ZTF21abkinhh
+ZTF21abcfgub	Ia	0.95784	178.5011194	56.9911793	0.078	https://fritz.science/source/ZTF21abcfgub
+ZTF20acupibp	Ia	1.0	351.3362273	-12.1243358	0.082991	https://fritz.science/source/ZTF20acupibp
+ZTF22aadetzs	Ia	0.98755	239.4630647	29.9196467	0.119	https://fritz.science/source/ZTF22aadetzs
+ZTF21aaqyifh	Type II	1.0	145.3789663	10.6396248	0.018005	https://fritz.science/source/ZTF21aaqyifh
+ZTF21abovcii	Ia	0.2	24.6571653	35.1371186	0.106	https://fritz.science/source/ZTF21abovcii
+ZTF21aaydxoo	IIn	1.0	203.9496319	2.9998153	0.021759	https://fritz.science/source/ZTF21aaydxoo
+ZTF20acpzaoa	Ib	1.0	167.4822886	36.945766	0.03	https://fritz.science/source/ZTF20acpzaoa
+ZTF21aasuazz	Ia	1.0	174.4607186	-7.2283651	0.055735	https://fritz.science/source/ZTF21aasuazz
+ZTF21aagtceu	Ia	0.9993	219.6633577	52.584673	0.044665	https://fritz.science/source/ZTF21aagtceu
+ZTF21aaaovua	Ia	1.0	229.864843	6.2315357	0.097	https://fritz.science/source/ZTF21aaaovua
+ZTF22aafrsmk	Ia	0.999	252.5656313	23.5825809	0.036061	https://fritz.science/source/ZTF22aafrsmk
+ZTF22abkxbeo	Ia-pec	0.6	20.8728946	1.2179834	0.0177	https://fritz.science/source/ZTF22abkxbeo
+ZTF21abqvyyz	Ia	0.91297	35.7572037	-0.4194039	0.102	https://fritz.science/source/ZTF21abqvyyz
+ZTF22aaafdpd	Ia	0.95025	213.0598309	18.6451986	0.05595	https://fritz.science/source/ZTF22aaafdpd
+ZTF21aaxtepe	Type II	0.7	186.6368796	16.8473511	0.0452309996	https://fritz.science/source/ZTF21aaxtepe
+ZTF21acqgsri	Ia-91bg	0.9	155.5541738	17.8612375	0.028	https://fritz.science/source/ZTF21acqgsri
+ZTF21acpanoy	Ia	0.95236	139.0776664	42.3896956	0.063004	https://fritz.science/source/ZTF21acpanoy
+ZTF22abybwdz	Ia	0.97485	139.2375969	20.1716142	0.027662	https://fritz.science/source/ZTF22abybwdz
+ZTF21aakzicj	IIP	1.0	114.4405635	21.6385826	0.0284000002	https://fritz.science/source/ZTF21aakzicj
+ZTF22aaahesb	Type II	0.85	105.2597011	51.265458	0.020954	https://fritz.science/source/ZTF22aaahesb
+ZTF22aaafmec	Ia	0.97585	183.948396	27.0319086	0.104	https://fritz.science/source/ZTF22aaafmec
+ZTF22abtdzyw	Ia	0.96304	358.527564	7.485923	0.07	https://fritz.science/source/ZTF22abtdzyw
+ZTF21aaymqdv	Ic	0.5	156.8121943	8.5501762	0.04499	https://fritz.science/source/ZTF21aaymqdv
+ZTF19abtqqaz	Ia		3.4258082	15.55161345	0.12	https://fritz.science/source/ZTF19abtqqaz
+ZTF22abkaaje	Ia	0.99399	113.2279394	36.245816	0.07	https://fritz.science/source/ZTF22abkaaje
+ZTF21aazcjbh	Ia	1.0	243.0822265	26.7834841	0.1	https://fritz.science/source/ZTF21aazcjbh
+ZTF21aaahuox	Ia	1.0	182.9082286	12.1630119	0.07378	https://fritz.science/source/ZTF21aaahuox
+ZTF21aaufthj	Ia	0.99977	151.8056644	14.7730619	0.054	https://fritz.science/source/ZTF21aaufthj
+ZTF20acwytmh	Ia	1.0	237.8643805	22.6032851	0.04671	https://fritz.science/source/ZTF20acwytmh
+ZTF19acgldqr	Ia-91bg	0.8	5.6175404	-4.8363617	0.048	https://fritz.science/source/ZTF19acgldqr
+ZTF21aaxstsv	Ia	0.96613	215.8781949	8.3450075	0.09	https://fritz.science/source/ZTF21aaxstsv
+ZTF22absxatm	Ia	0.99	149.6304023	-2.8209954	0.047266	https://fritz.science/source/ZTF22absxatm
+ZTF21abpnotj	Ib	1.0	215.4987903	28.8696658	0.0295	https://fritz.science/source/ZTF21abpnotj
+ZTF19acxngol	Ia	1.0	125.9229716	21.4344874	0.017155	https://fritz.science/source/ZTF19acxngol
+ZTF21abvdyoj	Ia	1.0	257.2062191	26.6491062	0.111777	https://fritz.science/source/ZTF21abvdyoj
+ZTF20achtubm	Ia		27.5509526	-10.9532783	0.136	https://fritz.science/source/ZTF20achtubm
+ZTF20aalreme	Ia	1.0	193.4257593	-4.4414891	0.1475	https://fritz.science/source/ZTF20aalreme
+ZTF22abksuwt	Ia	0.8	148.2946358	7.8751328	0.040697	https://fritz.science/source/ZTF22abksuwt
+ZTF20abxkjxg	Ia	1.0	46.4469781	-0.1615258	0.106824	https://fritz.science/source/ZTF20abxkjxg
+ZTF22aaiisww	Ia	1.0	208.5627222	54.2893856	0.107876	https://fritz.science/source/ZTF22aaiisww
+ZTF21acajcyb	Ia	1.0	314.3260934	-15.2536403	0.08	https://fritz.science/source/ZTF21acajcyb
+ZTF22aabzqnf	Ia	0.99688	233.1335398	4.6795615	0.038875	https://fritz.science/source/ZTF22aabzqnf
+ZTF22abtnuch	Ia	1.0	65.6612775	-1.9384576	0.097	https://fritz.science/source/ZTF22abtnuch
+ZTF21acpicsi	Ic	1.0	357.8431039	20.1097103	0.014	https://fritz.science/source/ZTF21acpicsi
+ZTF22aaagscm	Ia	0.97214	27.7591935	18.3753596	0.061	https://fritz.science/source/ZTF22aaagscm
+ZTF20acquetr	Ia	0.6	165.797431	41.7064811	0.030791	https://fritz.science/source/ZTF20acquetr
+ZTF21acoqfar	Ia	0.95	141.6584592	47.2129381	0.075	https://fritz.science/source/ZTF21acoqfar
+ZTF21aaxtrlt	Ia-91T	1.0	219.0963674	-0.584211	0.08203	https://fritz.science/source/ZTF21aaxtrlt
+ZTF22aakrimd	Ia	0.99677	222.8358575	35.6465525	0.085	https://fritz.science/source/ZTF22aakrimd
+ZTF22aaolexr	Ia	0.9872	285.0442964	59.1518203	0.074	https://fritz.science/source/ZTF22aaolexr
+ZTF21aalnxkl	Ia	1.0	202.9812241	-2.4515423	0.0874	https://fritz.science/source/ZTF21aalnxkl
+ZTF21abconph	Ia	1.0	170.6253687	4.2448379	0.0381	https://fritz.science/source/ZTF21abconph
+ZTF20actocyw	Ia	1.0	208.0688798	2.1071692	0.0330559984	https://fritz.science/source/ZTF20actocyw
+ZTF20aczaawu	Ia	1.0	53.5084478	-16.3522529	0.109	https://fritz.science/source/ZTF20aczaawu
+ZTF21abvarfi	Ia	0.99896	225.5185602	28.7002004	0.06258	https://fritz.science/source/ZTF21abvarfi
+ZTF20aaqnglu	Ia		132.2565391	1.5719612	0.04338	https://fritz.science/source/ZTF20aaqnglu
+ZTF22aaahubo	IIP	1.0	125.8595457	-4.9185546	0.0229090005	https://fritz.science/source/ZTF22aaahubo
+ZTF22aaorjov	Ia	0.98291	332.8557416	-16.6101309	0.049	https://fritz.science/source/ZTF22aaorjov
+ZTF21aauvmck	Ibn	0.97	219.7501906	12.669475	0.03793	https://fritz.science/source/ZTF21aauvmck
+ZTF22aaqytjb	Ibn	0.9	227.9917378	32.8415771	0.091	https://fritz.science/source/ZTF22aaqytjb
+ZTF21aasbkrl	Ia	0.98629	226.4231069	31.9936297	0.09	https://fritz.science/source/ZTF21aasbkrl
+ZTF20acwfgiy	Ia	1.0	228.1899962	7.3646972	0.045115	https://fritz.science/source/ZTF20acwfgiy
+ZTF22abbtmdv	Ia	0.9287	332.6282768	0.0357781	0.096	https://fritz.science/source/ZTF22abbtmdv
+ZTF21aarejnt	Ia	0.93477	199.618693	-4.1269673	0.061	https://fritz.science/source/ZTF21aarejnt
+ZTF21aawzanx	transient	0.7	219.7698621	30.9801862	0.034113	https://fritz.science/source/ZTF21aawzanx
+ZTF19acklbjr	Ia		0.3401021	34.60774255	0.11	https://fritz.science/source/ZTF19acklbjr
+ZTF21aaaoviv	Ia	0.9996	204.004755	22.6464634	0.065883	https://fritz.science/source/ZTF21aaaoviv
+ZTF22abunjts	Ia-91bg	0.4	138.7534553	22.5894874	0.027214	https://fritz.science/source/ZTF22abunjts
+ZTF21aaabxln	Ia	1.0	211.8637008	13.0676676	0.08	https://fritz.science/source/ZTF21aaabxln
+ZTF20actvmqi	Ia	1.0	169.8960933	53.5907046	0.105975	https://fritz.science/source/ZTF20actvmqi
+ZTF22aadlnaf	Ia	0.98101	158.7829851	27.4205242	0.038	https://fritz.science/source/ZTF22aadlnaf
+ZTF21acgumnf	Ia	0.5	139.0893695	17.7278291	0.025961	https://fritz.science/source/ZTF21acgumnf
+ZTF20acyhena	Ia	1.0	20.2178253	4.7956185	0.0340170003	https://fritz.science/source/ZTF20acyhena
+ZTF21abcwsho	Ia	1.0	239.1837203	25.6740012	0.07408	https://fritz.science/source/ZTF21abcwsho
+ZTF22abtjcbg	Ia	1.0	41.5335636	-26.9240494	0.082	https://fritz.science/source/ZTF22abtjcbg
+ZTF22aaohpmz	Ia	0.96683	212.468125	55.5790287	0.08795	https://fritz.science/source/ZTF22aaohpmz
+ZTF21acincqb	Ia	0.98856	10.8995111	30.5923203	0.018086	https://fritz.science/source/ZTF21acincqb
+ZTF20abxawtv	Ia		123.5257878	40.2676252	0.03877	https://fritz.science/source/ZTF20abxawtv
+ZTF21acqedvx	Ia	1.0	10.0796136	8.7822814	0.19	https://fritz.science/source/ZTF21acqedvx
+ZTF21achkqhi	Type II	1.0	37.2182681	-5.4873012	0.0311	https://fritz.science/source/ZTF21achkqhi
+ZTF22abhjuqr	Ia	0.93203	146.0700639	9.6708979	0.105	https://fritz.science/source/ZTF22abhjuqr
+ZTF22aaimgvi	Ia	0.98139	177.6533296	17.8241547	0.074636	https://fritz.science/source/ZTF22aaimgvi
+ZTF21abbuylk	Ia	1.0	176.0797527	19.3184955	0.08703	https://fritz.science/source/ZTF21abbuylk
+ZTF19aawfbzn	Ia-91bg		340.0262662	24.6982008	0.04275	https://fritz.science/source/ZTF19aawfbzn
+ZTF21aardybv	Ia	1.0	158.4206054	-3.7066704	0.065	https://fritz.science/source/ZTF21aardybv
+ZTF23aagjkww	Ia	0.999	147.0245319	-0.3821585	0.06	https://fritz.science/source/ZTF23aagjkww
+ZTF22aahmbwn	Ia	0.91877	247.815379	78.7349491	0.058	https://fritz.science/source/ZTF22aahmbwn
+ZTF19acavtco	Ia		110.2800449	39.8181969	0.07034	https://fritz.science/source/ZTF19acavtco
+ZTF22aaagvyp	Ia	1.0	129.7870999	60.9878619	0.084	https://fritz.science/source/ZTF22aaagvyp
+ZTF22aaaehzd	Ia	0.92663	226.3393177	2.3080803	0.097	https://fritz.science/source/ZTF22aaaehzd
+ZTF21acnidcg	IIP	0.9	178.2576429	-7.6248923	0.0242299996	https://fritz.science/source/ZTF21acnidcg
+ZTF21abczuub	Ia	1.0	315.9448243	-0.9601324	0.13	https://fritz.science/source/ZTF21abczuub
+ZTF20aazchcq	Type II	1.0	220.4190055	19.3491474	0.03791	https://fritz.science/source/ZTF20aazchcq
+ZTF21achupwa	Ia	1.0	321.5146617	10.4059293	0.09341	https://fritz.science/source/ZTF21achupwa
+ZTF19acnfsij	Novae	1.0	10.6264523	41.0580844	0.000177	https://fritz.science/source/ZTF19acnfsij
+ZTF22aaafetg	Ia	1.0	213.4091672	50.1080171	0.077478	https://fritz.science/source/ZTF22aaafetg
+ZTF22aacnxuw	Ia	0.97763	114.9566719	49.4046401	0.08433	https://fritz.science/source/ZTF22aacnxuw
+ZTF21acempzi	Ia	1.0	325.7724997	-17.5440867	0.036969	https://fritz.science/source/ZTF21acempzi
+ZTF22absqhkw	Type II	1.0	71.9942149	-16.6603089	0.031725	https://fritz.science/source/ZTF22absqhkw
+ZTF22aagyrlp	Ia	0.99978	149.1949852	11.9087136	0.044607	https://fritz.science/source/ZTF22aagyrlp
+ZTF22aaaokni	Ia	1.0	211.3091877	-0.4866056	0.070263	https://fritz.science/source/ZTF22aaaokni
+ZTF21acliqdq	Type II	1.0	165.8046085	11.0710735	0.021374	https://fritz.science/source/ZTF21acliqdq
+ZTF22aaaoyme	Ic-BL	0.22	224.8975054	14.1288551	0.0445	https://fritz.science/source/ZTF22aaaoyme
+ZTF21aappqmz	Ic-SLSN	1.0	156.8552982	20.4543477	0.508	https://fritz.science/source/ZTF21aappqmz
+ZTF22abntgaw	Ia-91T	0.9	38.2710097	-10.7370873	0.2	https://fritz.science/source/ZTF22abntgaw
+ZTF21aatklhw	Ia	1.0	215.8687089	51.9177517	0.06689	https://fritz.science/source/ZTF21aatklhw
+ZTF22aapucey	Type II	0.21	359.4791965	-14.0419928	0.03	https://fritz.science/source/ZTF22aapucey
+ZTF22abmxivl	Ib	0.1	20.8393999	1.6554837	0.124	https://fritz.science/source/ZTF22abmxivl
+ZTF21aalkknw	Ia	1.0	229.6966479	27.4325079	0.1	https://fritz.science/source/ZTF21aalkknw
+ZTF22aadoypp	Type II	0.999	173.7056528	11.2534873	0.035859	https://fritz.science/source/ZTF22aadoypp
+ZTF21abqgrqd	IIb	0.8	328.4976316	6.6975116	0.028019	https://fritz.science/source/ZTF21abqgrqd
+ZTF21abbybbx	Ia	1.0	185.5927804	10.7930696	0.094	https://fritz.science/source/ZTF21abbybbx
+ZTF21abtzmlz	Ia	0.97552	256.4268196	25.519379	0.037	https://fritz.science/source/ZTF21abtzmlz
+ZTF22aaagszu	Ic-BL	0.5	12.8613303	40.7295528	0.01953	https://fritz.science/source/ZTF22aaagszu
+ZTF21aaxubqf	Ia	0.99544	212.1649431	55.5766474	0.073698	https://fritz.science/source/ZTF21aaxubqf
+ZTF22aakjjjj	Ia	0.99003	174.3688857	-10.8982506	0.046	https://fritz.science/source/ZTF22aakjjjj
+ZTF21aalkjbl	Ia-91bg	0.8	240.666484	15.7621093	0.037372	https://fritz.science/source/ZTF21aalkjbl
+ZTF21aatwkkg	IIn	1.0	159.8071294	-26.6410036	0.113	https://fritz.science/source/ZTF21aatwkkg
+ZTF19abdsnmj	Ia	1.0	199.0000186	-14.9043047	0.094	https://fritz.science/source/ZTF19abdsnmj
+ZTF22abmnzfh	Ia	0.44	150.2832641	0.2676996	0.1	https://fritz.science/source/ZTF22abmnzfh
+ZTF21aacxung	Ia	0.9996	128.5471835	55.8116889	0.046118	https://fritz.science/source/ZTF21aacxung
+ZTF22abyochg	Ia	0.98463	168.6102994	-7.2654633	0.04725704342126846	https://fritz.science/source/ZTF22abyochg
+ZTF21abybqzc	Ia	1.0	348.1280582	-21.4616934	0.09	https://fritz.science/source/ZTF21abybqzc
+ZTF20aciigcw	Ia-91bg	1.0	14.7093544	12.9400486	0.041	https://fritz.science/source/ZTF20aciigcw
+ZTF21acjvjyk	Ia	0.98828	128.4715063	57.5389464	0.026775	https://fritz.science/source/ZTF21acjvjyk
+ZTF21aapzgos	IIP	1.0	136.2378264	15.8397002	0.039988	https://fritz.science/source/ZTF21aapzgos
+ZTF19abrcpnj	Ia	1.0	16.8081908	5.9068917	0.134	https://fritz.science/source/ZTF19abrcpnj
+ZTF22aabwcaq	Ia	1.0	203.7643831	0.5868541	0.088	https://fritz.science/source/ZTF22aabwcaq
+ZTF21acpocmd	Ia	0.95573	147.2506207	39.2400064	0.0411409996	https://fritz.science/source/ZTF21acpocmd
+ZTF21abovblm	Ia	1.0	38.9253345	1.2239574	0.067825	https://fritz.science/source/ZTF21abovblm
+ZTF22aaikzzr	Ia	0.99	145.7904852	3.8642614	0.06323	https://fritz.science/source/ZTF22aaikzzr
+ZTF21aappktx	Ia	1.0	159.3257084	-5.1606649	0.07	https://fritz.science/source/ZTF21aappktx
+ZTF21aaahzpr	Ia	1.0	177.2983944	-2.2864419	0.09	https://fritz.science/source/ZTF21aaahzpr
+ZTF22aaddorn	Ia	1.0	169.5023296	7.8457539	0.0211	https://fritz.science/source/ZTF22aaddorn
+ZTF22aatxwlk	Ia	0.99492	210.821039	26.4662321	0.055	https://fritz.science/source/ZTF22aatxwlk
+ZTF22aaacswh	Ia	1.0	141.0281532	63.4748398	0.048916	https://fritz.science/source/ZTF22aaacswh
+ZTF19achtiax	Ia-02cx	1.0	177.7440616	22.0781239	0.02491	https://fritz.science/source/ZTF19achtiax
+ZTF20acplkub	Novae	1.0	9.8753039	40.5169427	0.0002	https://fritz.science/source/ZTF20acplkub
+ZTF19acbmqoj	AGN	1.0	86.7041218	-17.4261265		https://fritz.science/source/ZTF19acbmqoj
+ZTF22aadqkuv	Ia-91T	0.999	227.9801211	2.1840006	0.1	https://fritz.science/source/ZTF22aadqkuv
+ZTF20abxbjai	Ia	1.0	197.9853067	44.8156266	0.05508536	https://fritz.science/source/ZTF20abxbjai
+ZTF21achpehw	Ia	1.0	167.4792488	7.2362182	0.021062	https://fritz.science/source/ZTF21achpehw
+ZTF22aadiujq	Ia	0.99963	108.4086578	12.2898187	0.027429	https://fritz.science/source/ZTF22aadiujq
+ZTF21aclmgzk	IIP	0.8	9.8454509	2.8040943	0.017522	https://fritz.science/source/ZTF21aclmgzk
+ZTF19abrdxbh	Ca-rich	1.0	222.727517	27.5825114	0.03025	https://fritz.science/source/ZTF19abrdxbh
+ZTF22abvaggn	Ia	0.99938	117.0901668	18.6383562	0.044	https://fritz.science/source/ZTF22abvaggn
+ZTF21acjvgxg	Ia	0.99867	115.5913075	36.7151695	0.087	https://fritz.science/source/ZTF21acjvgxg
+ZTF21abkavmp	Ia	0.99275	235.8636003	7.9068471	0.0366729982	https://fritz.science/source/ZTF21abkavmp
+ZTF22abcuctb	Ia	0.9844	246.0830461	41.0982036	0.094	https://fritz.science/source/ZTF22abcuctb
+ZTF21abiricn	Ib	1.0	211.1515979	13.1355135	0.09	https://fritz.science/source/ZTF21abiricn
+ZTF21aakvrgb	Ia	1.0	244.7983166	30.5411235	0.049312	https://fritz.science/source/ZTF21aakvrgb
+ZTF21abgkipt	Classical Nova	0.96	10.7456186	41.3022892	0.001	https://fritz.science/source/ZTF21abgkipt
+ZTF21aaydfro	Ia	0.96001	128.3400349	25.1010396	0.086	https://fritz.science/source/ZTF21aaydfro
+ZTF22abubrek	Ia-91T	1.0	351.7900471	-0.0655488	0.0832	https://fritz.science/source/ZTF22abubrek
+ZTF22aasthrj	Ia	0.9903	24.4514456	15.6370587	0.078	https://fritz.science/source/ZTF22aasthrj
+ZTF22abnmpty	Ia	0.87	327.096127	6.8360897	0.075	https://fritz.science/source/ZTF22abnmpty
+ZTF19abqynnh	Ia		106.2371183	33.5629804	0.04106	https://fritz.science/source/ZTF19abqynnh
+ZTF22aahxaiv	Ic-BL	0.3	207.8327711	58.9108421	0.072	https://fritz.science/source/ZTF22aahxaiv
+ZTF21ablrhtk	Ia	1.0	255.0735117	23.090403	0.058086	https://fritz.science/source/ZTF21ablrhtk
+ZTF22abvmasw	Type II	0.99	185.860012	16.7218574	0.03051	https://fritz.science/source/ZTF22abvmasw
+ZTF21aatabgn	Type II	1.0	207.0883678	28.2686825	0.0777	https://fritz.science/source/ZTF21aatabgn
+ZTF22aamepcs	Ia	1.0	151.0888529	54.6446292	0.05	https://fritz.science/source/ZTF22aamepcs
+ZTF19abzqdjy	Ia		353.1135551	5.8488932	0.0451	https://fritz.science/source/ZTF19abzqdjy
+ZTF22aapqpro	Ia	1.0	181.865431	57.7562725	0.03525442257523537	https://fritz.science/source/ZTF22aapqpro
+ZTF22aaqyiqm	Ia	0.96776	195.8694934	-2.8927513	0.079077	https://fritz.science/source/ZTF22aaqyiqm
+ZTF20acxoocn	Ic	0.9	53.1853042	-1.0677879	0.030835	https://fritz.science/source/ZTF20acxoocn
+ZTF20acpgzkt	Ia	1.0	120.1983146	35.4738016	0.155	https://fritz.science/source/ZTF20acpgzkt
+ZTF22aakcvbr	Ia	0.99686	184.0966144	-18.55423	0.045291	https://fritz.science/source/ZTF22aakcvbr
+ZTF21abhuqpe	Ia	0.99624	203.2762887	32.5918156	0.034551	https://fritz.science/source/ZTF21abhuqpe
+ZTF22aaizxqg	Ia	0.9649	223.6304006	4.3313814	0.09	https://fritz.science/source/ZTF22aaizxqg
+ZTF22aajrjrc	Ia	0.96774	166.5816549	31.1840685	0.0464319997	https://fritz.science/source/ZTF22aajrjrc
+ZTF20aclnxgz	IIb	1.0	162.6091761	64.813204	0.0425160006	https://fritz.science/source/ZTF20aclnxgz
+ZTF22aaafbww	Ia	0.99839	187.3389362	5.7843105	0.074	https://fritz.science/source/ZTF22aaafbww
+ZTF22abtltcw	Classical Nova	0.99	10.3572083	40.7398126	0.00017	https://fritz.science/source/ZTF22abtltcw
+ZTF22abxmdxh	Ia	0.98837	331.0293931	0.5856338	0.0495	https://fritz.science/source/ZTF22abxmdxh
+ZTF20acxyipy	Ia	1.0	160.7074989	0.8830262	0.13	https://fritz.science/source/ZTF20acxyipy
+ZTF23aaovxwf	Ia	0.8	351.1407398	-19.0566664	0.025287	https://fritz.science/source/ZTF23aaovxwf
+ZTF22aaafegw	Ia	0.44	213.7314966	30.8874372	0.053162	https://fritz.science/source/ZTF22aaafegw
+ZTF22aadlmgg	Ia-91bg	0.999	160.8757751	19.0829887	0.046	https://fritz.science/source/ZTF22aadlmgg
+ZTF20acgrzjm	Ia	1.0	79.9576936	-20.9651335	0.029047	https://fritz.science/source/ZTF20acgrzjm
+ZTF19aavwtcb	AGN	1.0	175.2383623	-2.2860859		https://fritz.science/source/ZTF19aavwtcb
+ZTF21abcmepi	Ia	0.99353	187.8626151	4.2264574	0.089	https://fritz.science/source/ZTF21abcmepi
+ZTF21abatolf	Ia	0.9	222.5918297	2.1918	0.0449	https://fritz.science/source/ZTF21abatolf
+ZTF20acfucwr	Novae	1.0	10.78492	41.1471991	0.00017	https://fritz.science/source/ZTF20acfucwr
+ZTF21abhuoyz	Ia	1.0	215.8999257	14.1197456	0.0875	https://fritz.science/source/ZTF21abhuoyz
+ZTF21abyslhz	Ia	0.84	121.9900697	58.1918272	0.1	https://fritz.science/source/ZTF21abyslhz
+ZTF21abdahjc	Ia	1.0	336.3883864	-8.6611571	0.07	https://fritz.science/source/ZTF21abdahjc
+ZTF22abfunyc	Ia	0.97062	255.7095498	29.9487563	0.09	https://fritz.science/source/ZTF22abfunyc
+ZTF22aalzjdc	Ic-SLSN	0.12	235.7586503	18.0765846	0.2	https://fritz.science/source/ZTF22aalzjdc
+ZTF21aasmyau	Type II	1.0	127.9859065	-4.1337915	0.039	https://fritz.science/source/ZTF21aasmyau
+ZTF21acbutpl	Classical Nova	1.0	10.1899445	41.7555849		https://fritz.science/source/ZTF21acbutpl
+ZTF21aamttit	Ia	0.8	171.9546079	21.3867608	0.040571	https://fritz.science/source/ZTF21aamttit
+ZTF21abnspht	Ia	0.89	216.8527201	46.2001899	0.074937	https://fritz.science/source/ZTF21abnspht
+ZTF20acwdnbw	Ia	1.0	131.2917566	29.5385574	0.07	https://fritz.science/source/ZTF20acwdnbw
+ZTF22abdtpru	Ia	0.99867	30.274789	15.3214668	0.073	https://fritz.science/source/ZTF22abdtpru
+ZTF21aaqyetj	Ia	1.0	141.3888656	-24.7650206	0.05369	https://fritz.science/source/ZTF21aaqyetj
+ZTF21aaaodzf	Ia	1.0	157.1846758	79.8107656	0.0315820016	https://fritz.science/source/ZTF21aaaodzf
+ZTF21abnjvkr	Ia	1.0	176.7830717	22.2165329	0.060807	https://fritz.science/source/ZTF21abnjvkr
+ZTF21aaafjad	Ia	1.0	116.785592	43.4892096	0.111	https://fritz.science/source/ZTF21aaafjad
+ZTF20actpbck	Ia	1.0	349.8295346	8.0999956	0.06	https://fritz.science/source/ZTF20actpbck
+ZTF20abxkwca	Ia-91bg	1.0	125.1324448	56.4756984	0.02781	https://fritz.science/source/ZTF20abxkwca
+ZTF20acnvorm	Ia	1.0	170.1457343	-1.490416	0.025151	https://fritz.science/source/ZTF20acnvorm
+ZTF22aaahfyi	Ia	0.9	112.692247	9.6471677	0.017679	https://fritz.science/source/ZTF22aaahfyi
+ZTF21abmdfyi	Type II	1.0	18.907293	-6.5913086	0.021138	https://fritz.science/source/ZTF21abmdfyi
