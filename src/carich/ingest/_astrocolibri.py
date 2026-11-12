@@ -20,7 +20,7 @@ each fails quietly rather than loudly:
 
 Instruments are not special-cased: the band name is normalised and then
 checked against sncosmo's own registry. ZTF and LSST pass that check,
-``asas-sn_g`` does not -- it normalises to ``asas-sng`` -- and the run stops
+``asas-sn_g`` does not, since it normalises to ``asas-sng``, and the run stops
 here instead of hours into a fit, on the first likelihood call.
 """
 

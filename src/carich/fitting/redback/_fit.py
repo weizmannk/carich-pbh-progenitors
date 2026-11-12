@@ -8,8 +8,8 @@ What is sampled
 ``t0`` is sampled as an absolute MJD, redback's own parameterisation, which
 ``t0_base_model`` requires. Its window is **derived from the data**, not from a
 table: from the first epoch of the file to the first detection
-(``_models.t0_window``). Both bounds are generic -- a transient explodes
-before it is seen, and nothing is known before the file starts -- so no target
+(``_models.t0_window``). Both bounds are generic, since a transient explodes
+before it is seen and nothing is known before the file starts, so no target
 needs tuning. ``--t0-min``/``--t0-max`` override it when a target genuinely
 needs it.
 
@@ -415,8 +415,8 @@ def resolve_config(args: argparse.Namespace) -> RunConfig:
     # transient is built. The window is a pair of offsets, and the epoch they
     # are offsets from is the first row of whatever is actually fitted. Reading
     # the full file here while the fit sees the filtered one shifted the window
-    # by the gap between the first limit and the first detection -- 6.04 d on
-    # SN2020oi -- and so placed t0 *after* the first detection, where
+    # by the gap between the first limit and the first detection, 6.04 d on
+    # SN2020oi, and so placed t0 *after* the first detection, where
     # t0_base_model returns its 1000 mag sentinel for every earlier epoch.
     rows = read_photometry(datafile)
     if args.detections_only:
@@ -504,7 +504,7 @@ def warn_if_sigma_railed(result, cfg) -> bool:
 
     A railed sigma is a silent failure: the budget is clipped, so the
     likelihood cannot widen far enough, every chi-square stays inflated and
-    M_Ni's interval is understated -- yet nothing in the output looks wrong.
+    M_Ni's interval is understated, yet nothing in the output looks wrong.
     Measured on SN2020oi at a 0.25 ceiling, the posterior sat at 0.241 with
     54% of its mass in the last 4% of the prior.
 

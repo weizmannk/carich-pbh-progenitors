@@ -1,7 +1,7 @@
 """Fetch ZTF photometry for one object and write it in the fitters' format.
 
-Pulls alert photometry from a ZTF broker -- Fink by default, Lasair as the
-alternative -- through redback's own getters, so the repository depends on no
+Pulls alert photometry from a ZTF broker (Fink by default, Lasair as the
+alternative) through redback's own getters, so the repository depends on no
 private service. The output is the ``<isot> <band> <mag> <err>`` file that
 ``carich.fitting`` already reads, with ``inf`` as the error marking a
 non-detection.
