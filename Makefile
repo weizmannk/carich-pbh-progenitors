@@ -37,9 +37,11 @@ endif
 	setup-precommit submit-nmma submit-redback test test-all
 
 #  ============ Mosfit ============
+# Python 3.12 is the only version that satisfies both the package
+# (>= 3.12) and the numpy <= 1.26.4 that MOSFiT pins.
 setup-mosfit:
-	uv venv .venv-mosfit
-	uv pip install --python .venv-mosfit -r requirements-mosfit.txt
+	uv venv .venv-mosfit --python 3.12
+	uv pip install --python .venv-mosfit -e ".[mosfit]"
 
 
 #  ============ NMMA ============
@@ -47,15 +49,13 @@ setup-mosfit:
 # Default sampler is dynesty; pymultinest is still installed for --sampler
 # pymultinest on request.
 #
-# nmma comes from GitHub, pinned to v1.0.2 (fixes bugs in PyPI's 1.0.1,
-# not yet released there).
+# nmma comes from GitHub; its version is pinned in the nmma extra of
+# pyproject.toml.
 # nmma requires Python >=3.12,<3.14; pinned explicitly because `uv venv` with
 # no --python picks whatever the machine defaults to, and 3.11 fails to resolve.
-NMMA_VERSION := v1.0.2
 setup-nmma: setup-multinest
 	uv venv .venv-nmma --python 3.12
-	uv pip install --python .venv-nmma -r requirements-nmma.txt
-	uv pip install --python .venv-nmma "git+https://github.com/nuclear-multimessenger-astronomy/nmma@$(NMMA_VERSION)"
+	uv pip install --python .venv-nmma -e ".[nmma]"
 	uv pip install --python .venv-nmma "git+https://github.com/JohannesBuchner/PyMultiNest"
 	echo 'export $(LIB_PATH_VAR)=$(HOME)/.local/lib:$$$(LIB_PATH_VAR)' >> .venv-nmma/bin/activate
 
@@ -106,7 +106,7 @@ submit-nmma:
 		--data-dir data/processed --outdir results/ \
 		-- --model $(MODEL) --prior $(PRIOR)
 
-# redback takes its own model names (see redback_models.MODELS) and finds its
+# redback takes its own model names (see carich.fitting.redback.MODELS) and finds its
 # prior in priors_redback/<model>.prior, so neither MODEL nor PRIOR above
 # applies. Override REDBACK_MODEL, e.g. make submit-redback REDBACK_MODEL=slsn.
 REDBACK_MODEL ?= arnett
@@ -131,6 +131,6 @@ submit-redback:
 # ------------------------------------------------------------------------
 setup-redback: setup-multinest
 	uv venv .venv-redback --python 3.12
-	uv pip install --python .venv-redback -r requirements-redback.txt
+	uv pip install --python .venv-redback -e ".[redback]"
 	echo 'export $(LIB_PATH_VAR)=$(HOME)/.local/lib:$$$(LIB_PATH_VAR)' \
 		>> .venv-redback/bin/activate
