@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools >= 77", "setuptools_scm >= 8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "carich"
+dynamic = ["version"]
+authors = [{name = "Weizmann Kiendrébéogo"}]
+description = "Faint hydrogen-poor transients as a test of dark-matter-triggered white dwarf explosions"
+requires-python = ">=3.12"
+dependencies = [
+    "astropy",
+    "dust-extinction >= 1.7",
+    "dustmaps",
+    "numpy",
+    "pandas",
+    "requests",
+    "sncosmo",
+]
+
+[project.optional-dependencies]
+# The three fitters disagree on numpy and pandas, so each gets its own
+# environment: `pip install -e ".[redback]"`, never two extras together.
+# redback: copied from requirements-redback.txt.
+redback = [
+    "redback[afterglow] == 1.20.0",
+    "pymultinest == 2.12",
+    "dynesty == 3.1.0",
+    "bilby == 2.8.2",
+    "numpy == 2.5.4",
+    "pandas == 3.0.6",
+    "astropy == 8.0.1",
+    "matplotlib == 3.11.2",
+]
+# FIXME: complete from requirements-nmma.txt and requirements-mosfit.txt
+# before deleting those files.
+nmma = ["nmma @ git+https://github.com/nuclear-multimessenger-astronomy/nmma@v1.0.2"]
+mosfit = ["mosfit"]
+test = ["pytest"]
+
+[project.scripts]
+carich-select = "carich._cli.select:main"
+carich-fetch-atlas = "carich._cli.atlas:main"
+
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+testpaths = ["src"]
+markers = ["slow: samples a posterior; excluded by `-m 'not slow'`"]
+
+[tool.ruff.lint]
+extend-select = ["I"]

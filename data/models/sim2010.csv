@@ -1,0 +1,9 @@
+# Pure detonations of carbon-oxygen white dwarfs, Sim et al. (2010),
+# ApJL 714, L52, Table 1 (12C/16O = 50/50 models).
+# mass: white dwarf mass (Msun); nickel: synthesized 56Ni mass (Msun).
+mass,nickel
+0.81,0.01
+0.88,0.07
+0.97,0.30
+1.06,0.56
+1.15,0.81
