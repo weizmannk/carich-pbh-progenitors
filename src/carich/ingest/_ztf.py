@@ -3,12 +3,12 @@
 Pulls alert photometry from a ZTF broker -- Fink by default, Lasair as the
 alternative -- through redback's own getters, so the repository depends on no
 private service. The output is the ``<isot> <band> <mag> <err>`` file that
-``src/fitting/*`` already read, with ``inf`` as the error marking a
+``carich.fitting`` already reads, with ``inf`` as the error marking a
 non-detection.
 
 Usage:
-    python fetch_ztf.py --object ZTF20abaunmw
-    python fetch_ztf.py --object ZTF20abaunmw --broker lasair --tmax 47
+    python -m carich.ingest._ztf --object ZTF20abaunmw
+    python -m carich.ingest._ztf --object ZTF20abaunmw --broker lasair --tmax 47
 
 Brokers carry alert photometry, which is not forced photometry: non-detections
 are reported only where the broker chose to, and the earliest epochs can be
@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 from astropy.time import Time
 
-from carich._paths import DATA
+from .._paths import DATA
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,11 @@
-"""Print the fit_redback.py CLI args for one object, for HTCondor submission.
+"""Print the ``_fit`` CLI args for one object, for HTCondor submission.
 
-Lives here (not condor/) because only redback-fit knows its own flags.
+Lives here (not condor/) because only this backend knows its own flags.
 condor/submit_batch.py calls this generically for any backend, without
 knowing backend-specific argument names or how to build them.
 
 Simpler than the NMMA counterpart: there is no --ebv-max to pre-compute,
-because fit_redback.py queries the Planck GNILC map itself from --ra/--dec
+because ``_fit`` queries the Planck GNILC map itself from --ra/--dec
 (and falls back to no correction if the map is unreachable). The coordinates
 are still forwarded so a worker with no targets.csv can do that query.
 
@@ -13,7 +13,7 @@ Prints one argument per line to stdout, so the caller never has to worry
 about shell-quoting values that might contain spaces.
 
 Usage:
-    python condor_args.py --object SN2021ugl --ra 246.9820265 --dec 20.253166509091 \\
+    python -m carich.fitting.redback._condor --object SN2021ugl --ra 246.9820265 --dec 20.253166509091 \\
         --model arnett --data-dir data/processed --outdir results/ \\
         [--z-known 0.0412] [--kappa 0.07] [--priors priors_redback/arnett.prior]
 """
@@ -56,7 +56,7 @@ def build_fit_args(args: argparse.Namespace) -> list[str]:
         "--outdir",
         args.outdir,
     ]
-    # Everything below is optional in fit_redback.py: pass a flag only when a
+    # Everything below is optional in _fit.py: pass a flag only when a
     # value was given, so the script's own defaults stay in one place.
     for flag, value in (
         ("--ra", args.ra),

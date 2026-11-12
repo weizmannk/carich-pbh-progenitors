@@ -2,7 +2,7 @@
 
 Nothing here reaches redback. These are labels and prose for a user interface:
 the fitting code reads parameters, priors and constraints from redback itself
-(see ``redback_models``), never from this file.
+(see ``_models``), never from this file.
 
 The field shape matches what the Astro-COLIBRI picker expects
 (``PICKER_MODELS`` in the Redback API routes), so wiring a model into the
@@ -233,7 +233,7 @@ DESCRIPTIONS: dict[str, dict] = {
 
 def describe(name: str) -> str:
     """Prose summary for the frontend, joined with redback's live parameters."""
-    from redback_models import constraint_keys, extinction_model, sampled
+    from ._models import constraint_keys, extinction_model, sampled
 
     entry = DESCRIPTIONS[name]
     parameters = ", ".join(

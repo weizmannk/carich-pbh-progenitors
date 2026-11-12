@@ -1,4 +1,4 @@
-"""Plot the best-fit light curve for an nmma fit_nmma.py run.
+"""Plot the best-fit light curve of a ``carich.fitting.nmma._fit`` run.
 
 Same per-filter [data + best-fit model + residuals] panel layout, header,
 right-margin provenance columns and secondary MJD axis as the reference
@@ -7,7 +7,7 @@ light-curve figure this was ported from, but with a plain matplotlib style
 *_bestfit_params.json written by `lightcurve-analysis --bestfit`.
 
 Usage:
-    .venv-nmma/bin/python plot_lightcurve.py \\
+    .venv-nmma/bin/python -m carich.fitting.nmma._plot \\
         --object ZTF21aapjmda --label v19-1993j-corr_ZTF21aapjmda \\
         --data data/processed/ZTF21aapjmda.dat --outdir results/
 """
@@ -24,10 +24,9 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
-from fit_nmma import get_trigger_time_from_datafile
 from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
-from nmma.em.io import load_em_observations
-from nmma.em.utils import get_filtered_mag
+
+from ._fit import get_trigger_time_from_datafile
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +87,11 @@ def plot_lightcurve(
     base = outdir / obj
     with open(base / f"{label}_bestfit_params.json") as fh:
         best = json.load(fh)
+
+    # Imported here so that the module loads in the redback environment,
+    # where the test suite runs and nmma is not installed.
+    from nmma.em.io import load_em_observations
+    from nmma.em.utils import get_filtered_mag
 
     data = load_em_observations(str(datafile), format="observations")
     trigger_time = get_trigger_time_from_datafile(datafile)

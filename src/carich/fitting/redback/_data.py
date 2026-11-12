@@ -20,7 +20,7 @@ and keeps the data identical across models, which is what makes their ln Z
 comparable.
 
 Two invariants this module enforces, both required by
-``redback_models.observed_model``:
+``_models.observed_model``:
 
 - **times are sorted ascending.** ``t0_base_model`` returns
   ``concatenate((pre_t0, post_t0))``, so an unsorted time array is silently
@@ -178,7 +178,7 @@ def build_transient(
     rows : list of dict
         Photometry from :func:`read_photometry`. Magnitudes are used as
         observed: extinction belongs in the forward model
-        (``redback_priors`` samples av_mw), never in the data.
+        (``_priors`` samples av_mw), never in the data.
     name : str
         Object identifier, used as the transient's name.
     upper_limit_sigma : float, optional

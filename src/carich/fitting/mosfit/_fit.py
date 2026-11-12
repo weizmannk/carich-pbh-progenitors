@@ -6,7 +6,7 @@ numpy 2.x). Writes to the same results/ directory with the same summary
 JSON format as the redback fit, so the two remain directly comparable.
 
 Usage:
-    .venv-mosfit/bin/python fit_mosfit.py --object ZTF20abaunmw --outdir results/
+    .venv-mosfit/bin/python -m carich.fitting.mosfit._fit --object ZTF20abaunmw --outdir results/
 """
 
 import argparse

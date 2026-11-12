@@ -47,6 +47,12 @@ carich-fetch-atlas = "carich._cli.atlas:main"
 [tool.pytest.ini_options]
 testpaths = ["src"]
 markers = ["slow: samples a posterior; excluded by `-m 'not slow'`"]
+# bilby reads its .prior files through unicode_escape, which Python 3.12
+# deprecates. Not ours to fix, and it would otherwise drown the summary.
+filterwarnings = [
+    "ignore:invalid escape sequence:DeprecationWarning",
+    "ignore::DeprecationWarning:bilby.*",
+]
 
 [tool.ruff.lint]
 extend-select = ["I"]

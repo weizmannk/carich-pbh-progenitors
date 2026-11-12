@@ -80,12 +80,14 @@ setup-multinest:
 setup-all: setup-redback setup-mosfit setup-nmma
 
 #  ============ Tests ============
-# They import the redback-fit modules, so they run in .venv-redback.
+# They import carich.fitting.redback, so they run in .venv-redback.
+REDBACK_TESTS := src/carich/fitting/redback
+
 test:
-	.venv-redback/bin/python -m pytest -m "not slow" -q
+	.venv-redback/bin/python -m pytest $(REDBACK_TESTS) -m "not slow" -q
 
 test-all:
-	.venv-redback/bin/python -m pytest -q
+	.venv-redback/bin/python -m pytest $(REDBACK_TESTS) -q
 
 #  ============ Dev tooling ============
 # Independent of the three fitting venvs: pre-commit runs at commit time,

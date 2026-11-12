@@ -1,8 +1,8 @@
-"""Print the fit_nmma.py CLI args for one object, for HTCondor submission.
+"""Print the ``_fit`` CLI args for one object, for HTCondor submission.
 
-Lives here (not condor/) because only nmma-fit knows its own flags
+Lives here (not condor/) because only this backend knows its own flags
 (--ebv-max, --z-known, --model, --prior) and how to compute --ebv-max
-(mw_extinction.get_sfd_ebv x EBV_SF2011). condor/submit_batch.py calls this
+(``get_sfd_ebv`` x ``EBV_SF2011``). condor/submit_batch.py calls this
 generically for any backend, without knowing backend-specific argument
 names or how to build them.
 
@@ -10,17 +10,15 @@ Prints one argument per line to stdout, so the caller never has to worry
 about shell-quoting values that might contain spaces.
 
 Usage:
-    python condor_args.py --object SN2021ugl --ra 246.9820265 --dec 20.253166509091 \\
+    python -m carich.fitting.nmma._condor --object SN2021ugl --ra 246.9820265 --dec 20.253166509091 \\
         --model v19-1993j-corr --prior config/priors/sncosmo-generic.prior \\
         --data-dir data/processed --outdir results/ [--z-known 0.0412]
 """
 
 import argparse
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "ingest"))
-from mw_extinction import EBV_SF2011, get_sfd_ebv
+from ...ingest._extinction import EBV_SF2011, get_sfd_ebv
 
 
 def parse_args() -> argparse.Namespace:

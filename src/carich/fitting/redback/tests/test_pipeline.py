@@ -14,19 +14,17 @@ The slow marker covers the injection-recovery test, which samples.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-from carich._paths import DATA, PRIORS_REDBACK, root
-
-sys.path.insert(0, str(root() / "src" / "fitting" / "redback-fit"))
-
-import redback_data as rd  # noqa: E402
-import redback_models as rm  # noqa: E402
-import redback_priors  # noqa: E402
+from ...._paths import DATA, PRIORS_REDBACK
+from .. import _data as rd
+from .. import _fit, _plot, _priors
+from .. import _models as rm
+from .._descriptions import DESCRIPTIONS, describe
+from .._priors import build_priors
 
 CONSTRAINED_MODELS = ("slsn", "tde_analytical", "cooling_envelope")
 DATAFILE = DATA / "processed" / "SN2021ugl.dat"
@@ -44,7 +42,7 @@ def _deterministic_prior_draws():
     the tests before it happened to leave, so a suite that passes in one order
     fails in another, which is how this fixture came to exist.
 
-    ``fit_redback.main`` seeds both for the same reason.
+    ``_fit.main`` seeds both for the same reason.
     """
     import bilby
 
@@ -59,7 +57,6 @@ def rows():
 
 def _config(**overrides):
     """A RunConfig with every field set, for the prior-building tests."""
-    import fit_redback
 
     defaults = dict(
         object_name="SN2021ugl",
@@ -91,7 +88,7 @@ def _config(**overrides):
         seed=42,
     )
     defaults.update(overrides)
-    return fit_redback.RunConfig(**defaults)
+    return _fit.RunConfig(**defaults)
 
 
 # --------------------------------------------------------------------------
@@ -245,14 +242,12 @@ def test_first_detection_is_display_only(rows):
     """It is recorded and plotted, never used to anchor the fit."""
     import inspect
 
-    import fit_redback
-
     transient = rd.build_transient(rows, "X", upper_limit_sigma=3.0)
     assert transient.first_detection_mjd == pytest.approx(rd.first_detection_mjd(rows))
     assert transient.first_epoch_mjd == pytest.approx(rd.first_epoch_mjd(rows))
 
     # The runner must anchor on the epoch, not the detection.
-    source = inspect.getsource(fit_redback.main)
+    source = inspect.getsource(_fit.main)
     assert "first_epoch_mjd(rows)" in source
     assert "first_detection_mjd(rows)" not in source
 
@@ -266,10 +261,9 @@ def test_first_detection_is_display_only(rows):
 def test_constraints_attached(model, rows):
     """Constraint priors must be present, or bilby rejects nothing."""
     import bilby
-    import redback_priors
 
     cfg = _config(model=model, t0_min=rm.T0_WINDOW[model][0])
-    priors = redback_priors.build_priors(cfg, REFERENCE_MJD)
+    priors = _priors.build_priors(cfg, REFERENCE_MJD)
 
     constraints = {
         key
@@ -286,10 +280,9 @@ def test_slsn_rejects_unphysical_sample(rows):
     which is a DeltaFunction here and so absent from the sampled dict.
     """
     import bilby
-    import redback_priors
 
     cfg = _config(model="slsn", kappa=0.07)
-    priors = redback_priors.build_priors(cfg, REFERENCE_MJD)
+    priors = _priors.build_priors(cfg, REFERENCE_MJD)
     constrained = {
         key
         for key, prior in priors.items()
@@ -336,7 +329,7 @@ def test_sampler_can_draw_constrained_samples(model, rows):
         kappa=0.07,
         t0_min=rm.T0_WINDOW[model][0],
     )
-    priors = redback_priors.build_priors(cfg, REFERENCE_MJD)
+    priors = _priors.build_priors(cfg, REFERENCE_MJD)
     keys = [
         key
         for key, prior in priors.items()
@@ -351,10 +344,9 @@ def test_sampler_can_draw_constrained_samples(model, rows):
 
 def test_no_constraint_flag(rows):
     import bilby
-    import redback_priors
 
     cfg = _config(model="slsn", no_constraint=True)
-    priors = redback_priors.build_priors(cfg, REFERENCE_MJD)
+    priors = _priors.build_priors(cfg, REFERENCE_MJD)
     assert not [
         key
         for key, prior in priors.items()
@@ -365,13 +357,12 @@ def test_no_constraint_flag(rows):
 def test_prior_file_override_keeps_constraints(rows, tmp_path):
     """Overriding one key must not drop the conversion function."""
     import bilby
-    import redback_priors
 
     prior_file = tmp_path / "slsn.prior"
     prior_file.write_text("p0 = Uniform(minimum=1.0, maximum=2.0, name='p0')\n")
 
     cfg = _config(model="slsn", priors=prior_file)
-    priors = redback_priors.build_priors(cfg, REFERENCE_MJD)
+    priors = _priors.build_priors(cfg, REFERENCE_MJD)
 
     assert priors["p0"].minimum == 1.0
     assert priors["p0"].maximum == 2.0
@@ -383,21 +374,20 @@ def test_prior_file_override_keeps_constraints(rows, tmp_path):
 
 
 def test_unknown_prior_key(rows, tmp_path):
-    import redback_priors
 
     prior_file = tmp_path / "bad.prior"
     prior_file.write_text("not_a_parameter = Uniform(minimum=0, maximum=1, name='x')\n")
 
     cfg = _config(model="slsn", priors=prior_file)
     with pytest.raises(ValueError, match="does not have"):
-        redback_priors.build_priors(cfg, REFERENCE_MJD)
+        _priors.build_priors(cfg, REFERENCE_MJD)
 
 
 def test_t0_prior_window(rows):
 
     reference = rd.first_epoch_mjd(rows)
     cfg = _config(model="arnett", t0_min=-30.0, t0_max=0.0)
-    priors = redback_priors.build_priors(cfg, REFERENCE_MJD)
+    priors = _priors.build_priors(cfg, REFERENCE_MJD)
 
     # An absolute MJD, anchored on the first detection, redback's own form,
     # the same way its examples write Uniform(data['MJD'].min() - 200, ...).
@@ -409,34 +399,28 @@ def test_t0_prior_window(rows):
 
 def test_redshift_modes(rows):
     import bilby
-    import redback_priors
 
-    fixed = redback_priors.build_priors(_config(z_known=0.0412), REFERENCE_MJD)
+    fixed = _priors.build_priors(_config(z_known=0.0412), REFERENCE_MJD)
     assert isinstance(fixed["redshift"], bilby.core.prior.DeltaFunction)
 
-    photometric = redback_priors.build_priors(
+    photometric = _priors.build_priors(
         _config(z_known=None, z_phot=0.05, z_phot_err=0.01), REFERENCE_MJD
     )
     assert isinstance(photometric["redshift"], bilby.core.prior.TruncatedGaussian)
 
-    sampled = redback_priors.build_priors(_config(z_known=None), REFERENCE_MJD)
+    sampled = _priors.build_priors(_config(z_known=None), REFERENCE_MJD)
     assert not isinstance(sampled["redshift"], bilby.core.prior.DeltaFunction)
 
 
 def test_kappa_optional(rows):
     """--kappa pins; its absence leaves redback's prior alone."""
     import bilby
-    import redback_priors
 
-    pinned = redback_priors.build_priors(
-        _config(model="arnett", kappa=0.07), REFERENCE_MJD
-    )
+    pinned = _priors.build_priors(_config(model="arnett", kappa=0.07), REFERENCE_MJD)
     assert isinstance(pinned["kappa"], bilby.core.prior.DeltaFunction)
     assert pinned["kappa"].peak == 0.07
 
-    free = redback_priors.build_priors(
-        _config(model="arnett", kappa=None), REFERENCE_MJD
-    )
+    free = _priors.build_priors(_config(model="arnett", kappa=None), REFERENCE_MJD)
     assert not isinstance(free["kappa"], bilby.core.prior.DeltaFunction)
 
 
@@ -530,19 +514,18 @@ def test_prior_files_carry_provenance():
 def test_every_model_has_a_description():
     """A model in MODELS with no description cannot be run at all.
 
-    fit_redback logs ``describe(cfg.model)`` before sampling, so a missing
+    _fit logs ``describe(cfg.model)`` before sampling, so a missing
     entry is a KeyError two seconds into the run, not a cosmetic gap. Both
     shock_cooling_and_arnett and sncosmo_models were added to MODELS without
     one, and each aborted its first fit.
     """
-    from model_descriptions import DESCRIPTIONS, describe
 
     for model in rm.MODELS:
         assert model in DESCRIPTIONS, f"{model} has no entry in DESCRIPTIONS"
         entry = DESCRIPTIONS[model]
         for field in ("label", "description", "derived", "reference", "caveat"):
             assert entry.get(field), f"{model}: {field} is missing or empty"
-        # The call fit_redback actually makes, which also joins redback's
+        # The call _fit actually makes, which also joins redback's
         # live parameter list, so an unknown key would raise here too. For the
         # sncosmo path that list is the template-independent part only.
         assert describe(model)
@@ -681,7 +664,7 @@ def test_sncosmo_priors_cover_exactly_the_templates_keys(rows):
     reference = rd.first_epoch_mjd(rows)
     low, high = rm.T0_WINDOW[rm.SNCOSMO_MODEL]
     cfg = _config(model=rm.SNCOSMO_MODEL, z_known=0.0412, t0_min=low, t0_max=high)
-    priors = redback_priors.build_priors(cfg, reference)
+    priors = _priors.build_priors(cfg, reference)
 
     assert set(priors) == set(rm.sncosmo_keys("v19-1993j-corr"))
     # A fixed offset window, as for every other model, NOT +/- 10 d of the
@@ -699,7 +682,7 @@ def test_sncosmo_priors_cover_exactly_the_templates_keys(rows):
 def test_sncosmo_salt3_uses_redbacks_own_salt2_values(rows):
     """SALT3 has no redback prior; salt2.prior's values are what it gets."""
     reference = rd.first_epoch_mjd(rows)
-    priors = redback_priors.build_priors(
+    priors = _priors.build_priors(
         _config(model=rm.SNCOSMO_MODEL, sncosmo_model="salt3"), reference
     )
 
@@ -747,17 +730,17 @@ def test_sncosmo_host_extinction_follows_the_av_host_flag(rows):
 
     reference = rd.first_epoch_mjd(rows)
 
-    pinned = redback_priors.build_priors(
+    pinned = _priors.build_priors(
         _config(model=rm.SNCOSMO_MODEL, sample_av_host=False), reference
     )
     assert isinstance(pinned["ebv"], bilby.core.prior.DeltaFunction)
     assert pinned["ebv"].peak == 0.0
 
-    sampled_host = redback_priors.build_priors(
+    sampled_host = _priors.build_priors(
         _config(model=rm.SNCOSMO_MODEL, sample_av_host=True, av_host_max=1.0),
         reference,
     )
-    assert sampled_host["ebv"].maximum == pytest.approx(1.0 / redback_priors.R_V_MW)
+    assert sampled_host["ebv"].maximum == pytest.approx(1.0 / _priors.R_V_MW)
 
 
 def test_supernova_t0_windows_follow_nmma(rows):
@@ -806,7 +789,7 @@ def test_effective_prior_can_be_read_back(tmp_path, rows):
     import bilby
 
     reference = rd.first_epoch_mjd(rows)
-    priors = redback_priors.build_priors(
+    priors = _priors.build_priors(
         _config(model=rm.SNCOSMO_MODEL, z_known=None, t0_min=-10.0, t0_max=60.0),
         reference,
         bands=["ztfg", "ztfr", "atlasc", "atlaso"],
@@ -847,7 +830,7 @@ def test_out_of_range_redshift_is_rejected_not_truncated():
     assert np.all(np.isinf(outside)), outside
 
     # And the prior itself is untouched: no truncation, so no free evidence.
-    priors = redback_priors.build_priors(
+    priors = _priors.build_priors(
         _config(model=rm.SNCOSMO_MODEL, z_known=None, t0_min=-30.0, t0_max=30.0),
         59419.226,
         bands=["ztfg", "ztfr", "atlasc", "atlaso"],
@@ -905,14 +888,14 @@ def test_a_sncosmo_prior_file_wins_over_the_derived_amplitude(rows):
     in_file = bilby.core.prior.PriorDict(str(path))["amplitude"]
     reference = rd.first_epoch_mjd(rows)
 
-    supplied = redback_priors.build_priors(
+    supplied = _priors.build_priors(
         _config(model=rm.SNCOSMO_MODEL, priors=path, t0_min=-10.0, t0_max=60.0),
         reference,
     )["amplitude"]
     assert supplied.minimum == in_file.minimum
     assert supplied.maximum == in_file.maximum
 
-    derived = redback_priors.build_priors(
+    derived = _priors.build_priors(
         _config(model=rm.SNCOSMO_MODEL, priors=None, t0_min=-10.0, t0_max=60.0),
         reference,
     )["amplitude"]
@@ -943,7 +926,7 @@ def test_redshift_is_left_on_redbacks_own_prior_when_sampled(rows):
             z_known=None,
             t0_min=rm.T0_WINDOW[model][0],
         )
-        priors = redback_priors.build_priors(cfg, REFERENCE_MJD)
+        priors = _priors.build_priors(cfg, REFERENCE_MJD)
         assert priors["redshift"].minimum == shipped.minimum, model
         assert priors["redshift"].maximum == shipped.maximum, model
 
@@ -1080,7 +1063,7 @@ def test_extinction_wrapper_is_an_identity_at_zero_extinction():
 
     It does for every model but cooling_envelope, and that is the whole reason
     this pipeline corrects Galactic extinction on the DATA
-    (redback_data.deredden) instead of wrapping the model: for
+    (_data.deredden) instead of wrapping the model: for
     output_format='magnitude', _evaluate_extinction_model routes through
     output_format='spectra' and passes `time_eval=time_observer_frame`
     unchanged, while cooling_envelope's own magnitude path divides it by
@@ -1121,7 +1104,7 @@ def test_extinction_wrapper_is_an_identity_at_zero_extinction():
     assert discrepancy("tde_analytical", "extinction_with_tde_base_model") < 1e-6
     assert discrepancy("cooling_envelope", "extinction_with_tde_base_model") > 0.1, (
         "the cooling_envelope extinction wrapper no longer mis-scales time; "
-        "revisit redback_data.deredden vs the extinction_with_* wrappers"
+        "revisit _data.deredden vs the extinction_with_* wrappers"
     )
 
 
@@ -1270,7 +1253,6 @@ def test_every_likelihood_resolves_to_a_redback_class():
     renames a class this fails here instead of at the first likelihood call,
     hours into a fit.
     """
-    import redback_models as rm
 
     for name, spec in rm.LIKELIHOODS.items():
         cls = rm.likelihood_class(name)
@@ -1286,9 +1268,8 @@ def test_default_likelihood_leaves_the_choice_to_redback():
     Passing a class built here would duplicate redback's logic and could drift
     from it; returning None keeps that path byte-for-byte redback's.
     """
-    import fit_redback
 
-    assert fit_redback.build_likelihood(_config(), object(), {}) is None
+    assert _fit.build_likelihood(_config(), object(), {}) is None
 
 
 def test_budget_likelihoods_refuse_to_drop_upper_limits():
@@ -1297,7 +1278,6 @@ def test_budget_likelihoods_refuse_to_drop_upper_limits():
     Silently fitting detections only would change the t0 posterior and the
     ln Z without saying so, which is the one failure mode worth a hard stop.
     """
-    import fit_redback
     import numpy as np
     import pytest
 
@@ -1314,9 +1294,7 @@ def test_budget_likelihoods_refuse_to_drop_upper_limits():
             )
 
     with pytest.raises(SystemExit, match="2 upper limits"):
-        fit_redback.build_likelihood(
-            _config(likelihood="quadrature"), _WithLimits(), {}
-        )
+        _fit.build_likelihood(_config(likelihood="quadrature"), _WithLimits(), {})
 
 
 def test_budget_likelihoods_sample_sigma():
@@ -1326,7 +1304,6 @@ def test_budget_likelihoods_sample_sigma():
     pinned at whatever the class defaults to, which would look like a working
     fit.
     """
-    from redback_priors import build_priors
 
     plain = build_priors(_config(), 59419.0)
     assert "sigma" not in plain
@@ -1343,21 +1320,20 @@ def test_effective_errors_widen_only_for_budget_likelihoods():
 
     import numpy as np
     import pandas
-    import plot_redback
 
     errors = np.array([0.1, 0.1])
     draws = np.array([[20.0, 20.0], [20.0, 20.0]])
     result = types.SimpleNamespace(posterior=pandas.DataFrame({"sigma": [0.2, 0.2]}))
 
-    unchanged = plot_redback.effective_errors(_config(), result, errors, draws)
+    unchanged = _plot.effective_errors(_config(), result, errors, draws)
     assert np.allclose(unchanged, errors)
 
-    widened = plot_redback.effective_errors(
+    widened = _plot.effective_errors(
         _config(likelihood="quadrature"), result, errors, draws
     )
     assert np.allclose(widened, np.sqrt(0.1**2 + 0.2**2))
 
-    scaled = plot_redback.effective_errors(
+    scaled = _plot.effective_errors(
         _config(likelihood="systematic"), result, errors, draws
     )
     assert np.allclose(scaled, np.sqrt(0.1**2 + (20.0 * 0.2) ** 2))
@@ -1372,7 +1348,6 @@ def test_prior_file_extinction_wins_over_the_flags(tmp_path):
     ln Z too.
     """
     import pytest
-    from redback_priors import build_priors
 
     base = dict(
         model="sncosmo_models",
@@ -1504,8 +1479,6 @@ def test_t0_never_starts_after_the_first_fitted_detection(tmp_path):
     """
     import argparse
 
-    import fit_redback
-
     base = dict(
         object=None,
         data=DATAFILE,
@@ -1542,7 +1515,7 @@ def test_t0_never_starts_after_the_first_fitted_detection(tmp_path):
         args = argparse.Namespace(
             **{**base, "object": "SN2021ugl", "detections_only": detections_only}
         )
-        cfg = fit_redback.resolve_config(args)
+        cfg = _fit.resolve_config(args)
         kept = [r for r in rows if r["detected"]] if detections_only else rows
         reference = rd.first_epoch_mjd(kept)
         assert reference + cfg.t0_max <= detection + 1e-9, (
@@ -1559,7 +1532,6 @@ def test_a_railed_systematic_is_reported():
     """
     import types
 
-    import fit_redback
     import numpy as np
     import pandas
 
@@ -1568,13 +1540,13 @@ def test_a_railed_systematic_is_reported():
     railed = types.SimpleNamespace(
         posterior=pandas.DataFrame({"sigma": np.linspace(0.238, 0.25, 500)})
     )
-    assert fit_redback.warn_if_sigma_railed(railed, cfg) is True
+    assert _fit.warn_if_sigma_railed(railed, cfg) is True
 
     healthy = types.SimpleNamespace(
         posterior=pandas.DataFrame({"sigma": np.linspace(0.02, 0.12, 500)})
     )
-    assert fit_redback.warn_if_sigma_railed(healthy, cfg) is False
+    assert _fit.warn_if_sigma_railed(healthy, cfg) is False
 
     # The default likelihood samples no sigma at all.
     none = types.SimpleNamespace(posterior=pandas.DataFrame({"mej": [1.0, 2.0]}))
-    assert fit_redback.warn_if_sigma_railed(none, _config()) is False
+    assert _fit.warn_if_sigma_railed(none, _config()) is False

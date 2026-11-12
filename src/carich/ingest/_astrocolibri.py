@@ -1,13 +1,13 @@
 """Convert an Astro-COLIBRI lightcurve CSV into the fitters' ``.dat`` format.
 
-The companion of ``fetch_ztf.py`` for data that arrive as a file rather than
+The companion of ``_ztf.py`` for data that arrive as a file rather than
 from a broker. Output is the same ``<isot> <band> <mag> <err>`` table, with
 ``inf`` as the error marking a non-detection.
 
 Usage:
-    python astrocolibri_csv.py --object SN2020oi --csv <exported file>
+    python -m carich.ingest._astrocolibri --object SN2020oi --csv <exported file>
 
-``fetch_ztf.py`` cannot read this CSV, for three reasons worth stating because
+``_ztf.py`` cannot read this CSV, for three reasons worth stating because
 each fails quietly rather than loudly:
 
 - ``to_dat_rows`` skips every row whose ``mag`` is empty, which is every upper
@@ -33,7 +33,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from carich._paths import DATA
+from .._paths import DATA
 
 logger = logging.getLogger(__name__)
 

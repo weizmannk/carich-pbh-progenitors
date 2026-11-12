@@ -1,6 +1,6 @@
 """Redback prior configuration: redshift mode, kappa, t0 and extinction.
 
-The counterpart of ``nmma_priors.py`` on the other backend, and kept separate
+The counterpart of ``carich.fitting.nmma._priors`` on the other backend, and kept separate
 from the fit script for the same reason: what a fit assumes lives in one place
 that can be read, tested and diffed without reading the runner.
 
@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import logging
 
-from redback_models import (
+from ._models import (
     R_V_MW,
     constraint_keys,
     extinction_model,
@@ -311,14 +311,14 @@ def _sncosmo_priors(cfg, reference_mjd: float, bands=None):
     ``ebv`` is the host E(B-V) redback hands to sncosmo's CCM89 effect, the same
     quantity ``--sample-av-host`` controls elsewhere. ``av_mw`` is its Galactic
     counterpart, bounded by the dust map and applied around the template by
-    :func:`redback_models._with_galactic_extinction`, since redback registers
+    :func:`_models._with_galactic_extinction`, since redback registers
     sncosmo's F99 effect without ever setting ``mwebv``. Both are needed: with
     only ``ebv``, the host key absorbs the Galactic reddening and is then
     reported as host extinction.
 
     Parameters
     ----------
-    cfg : fit_redback.RunConfig
+    cfg : _fit.RunConfig
         A resolved configuration; ``cfg.sncosmo_model`` picks the template.
     reference_mjd : float
         The first detection.
@@ -327,7 +327,8 @@ def _sncosmo_priors(cfg, reference_mjd: float, bands=None):
         template's spectral validity. None leaves that prior untouched.
     """
     import bilby
-    from redback_models import (
+
+    from ._models import (
         sncosmo_keys,
         sncosmo_source_parameters,
     )
@@ -371,7 +372,7 @@ def _sncosmo_priors(cfg, reference_mjd: float, bands=None):
 
     # The redshift prior is left exactly as declared. Past the redshift where a
     # bandpass leaves the template's wavelength range, sncosmo raises; that is
-    # handled in redback_models._reject_outside_template, which returns an
+    # handled in _models._reject_outside_template, which returns an
     # infinite magnitude so the likelihood rejects the sample. Truncating the
     # prior instead would remove volume and inflate ln Z by the log of the
     # width removed, for a reason unrelated to the data.
@@ -501,7 +502,8 @@ def add_systematic_sigma(priors, cfg) -> None:
     --priors file to reproduce NMMA exactly.
     """
     import bilby
-    from redback_models import DEFAULT_LIKELIHOOD
+
+    from ._models import DEFAULT_LIKELIHOOD
 
     if getattr(cfg, "likelihood", DEFAULT_LIKELIHOOD) == DEFAULT_LIKELIHOOD:
         return
@@ -522,7 +524,7 @@ def build_priors(cfg, reference_mjd: float, bands=None):
 
     Parameters
     ----------
-    cfg : fit_redback.RunConfig
+    cfg : _fit.RunConfig
         A resolved configuration.
     reference_mjd : float
         The first detection, which the t0 bounds are offsets from, the same
@@ -537,7 +539,8 @@ def build_priors(cfg, reference_mjd: float, bands=None):
     """
     import bilby
     from redback.priors import get_priors
-    from redback_models import SNCOSMO_MODEL
+
+    from ._models import SNCOSMO_MODEL
 
     if cfg.model == SNCOSMO_MODEL:
         return _sncosmo_priors(cfg, reference_mjd, bands)
@@ -630,7 +633,7 @@ def build_priors(cfg, reference_mjd: float, bands=None):
 
 def extinction_summary(cfg) -> dict:
     """How extinction was treated, for the run summary."""
-    from redback_models import SNCOSMO_MODEL
+    from ._models import SNCOSMO_MODEL
 
     if cfg.model == SNCOSMO_MODEL:
         return {

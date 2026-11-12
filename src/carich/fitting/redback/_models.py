@@ -53,7 +53,7 @@ SNCOSMO_MODEL = "sncosmo_models"
 #                            data['MJD'].values.min() - 1, name='t0')
 #     priors['t0'] = Uniform(supernova.x[0] - 10, supernova.x[0] - 0.05, name='t0')
 #
-# These are the offsets redback_priors adds to the first detection. redback
+# These are the offsets _priors adds to the first detection. redback
 # cannot ship them: the plausible range depends on the data, not on the model.
 # Override with --t0-min / --t0-max.
 #
@@ -272,8 +272,8 @@ def t0_window(
     name : str
         Base model key.
     reference_mjd, first_detection_mjd : float, optional
-        From :func:`redback_data.first_epoch_mjd` and
-        :func:`redback_data.first_detection_mjd`.
+        From :func:`_data.first_epoch_mjd` and
+        :func:`_data.first_detection_mjd`.
 
     Returns
     -------

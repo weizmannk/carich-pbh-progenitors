@@ -1,14 +1,14 @@
 """Fit one redback model to one transient. CLI counterpart of NMMA's lightcurve-analysis.
 
 Usage:
-    python fit_redback.py --object SN2021ugl --model slsn --outdir results/
+    python -m carich.fitting.redback._fit --object SN2021ugl --model slsn --outdir results/
 
 What is sampled
 ---------------
 ``t0`` is sampled as an absolute MJD, redback's own parameterisation, which
 ``t0_base_model`` requires. Its window is **derived from the data**, not from a
 table: from the first epoch of the file to the first detection
-(``redback_models.t0_window``). Both bounds are generic -- a transient explodes
+(``_models.t0_window``). Both bounds are generic -- a transient explodes
 before it is seen, and nothing is known before the file starts -- so no target
 needs tuning. ``--t0-min``/``--t0-max`` override it when a target genuinely
 needs it.
@@ -52,7 +52,7 @@ extinction at all, which the summary records, and its ln Z is not comparable
 with the others', the same kind of exclusion the NMMA service paper already
 makes for Piro2021 outside its domain of validity.
 
-See tests/test_redback_pipeline.py::test_t0_extinction_models_work_except_cooling_envelope.
+See tests/test_pipeline.py::test_t0_extinction_models_work_except_cooling_envelope.
 """
 
 from __future__ import annotations
@@ -70,16 +70,18 @@ import matplotlib
 matplotlib.use("Agg")
 
 import numpy as np
-import plot_redback
 import redback
-from model_descriptions import describe
-from redback_data import (
+
+from ..._paths import DATA, PRIORS_REDBACK
+from . import _plot
+from ._data import (
     build_transient,
     first_detection_mjd,
     first_epoch_mjd,
     read_photometry,
 )
-from redback_models import (
+from ._descriptions import describe
+from ._models import (
     DEFAULT_LIKELIHOOD,
     LIKELIHOODS,
     MODELS,
@@ -91,9 +93,7 @@ from redback_models import (
     t0_window,
     time_parameter,
 )
-from redback_priors import build_priors, extinction_summary
-
-from carich._paths import DATA, PRIORS_REDBACK, root
+from ._priors import build_priors, extinction_summary
 
 logger = logging.getLogger(__name__)
 
@@ -246,7 +246,7 @@ def parse_args() -> argparse.Namespace:
         dest="t0_min",
         help="Earliest t0, days relative to the first epoch of the data file, "
         "not the first detection (negative = before it). Default: derived "
-        "from the data, see redback_models.t0_window",
+        "from the data, see _models.t0_window",
     )
     parser.add_argument(
         "--t0-max",
@@ -284,8 +284,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--plot-theme",
-        choices=tuple(plot_redback.THEMES),
-        default=plot_redback.DEFAULT_THEME,
+        choices=tuple(_plot.THEMES),
+        default=_plot.DEFAULT_THEME,
         dest="plot_theme",
         help="Figure palette. Only 'print', a plain figure for a paper, ships "
         "with this repository; others appear when a local palette module is "
@@ -367,9 +367,8 @@ def resolve_extinction(args: argparse.Namespace) -> tuple[float, str]:
         )
         return 0.0, "none"
 
-    sys.path.insert(0, str(root() / "src" / "ingest"))
     try:
-        from mw_extinction import get_planck_ebv
+        from ...ingest._extinction import get_planck_ebv
 
         return float(get_planck_ebv(*coordinates)), "planck_gnilc"
     except Exception as exc:
@@ -410,7 +409,7 @@ def resolve_config(args: argparse.Namespace) -> RunConfig:
         priors = default_prior if default_prior.exists() else None
 
     # Derived from this file's own cadence, not from a fixed table: see
-    # redback_models.t0_window. --t0-min/--t0-max still override it.
+    # _models.t0_window. --t0-min/--t0-max still override it.
     #
     # The --detections-only cut has to be applied HERE too, not only where the
     # transient is built. The window is a pair of offsets, and the epoch they
@@ -748,10 +747,10 @@ def main() -> int:
     )
 
     figures = {
-        "lightcurve": plot_redback.lightcurve(result, cfg, transient, outdir),
-        "corner": plot_redback.corner(result, cfg, outdir),
+        "lightcurve": _plot.lightcurve(result, cfg, transient, outdir),
+        "corner": _plot.corner(result, cfg, outdir),
     }
-    plot_redback.write_posterior_samples(result, cfg.label, outdir)
+    _plot.write_posterior_samples(result, cfg.label, outdir)
 
     summary = summarise(result, cfg, transient, priors)
     summary["figures"] = {k: str(v) for k, v in figures.items() if v is not None}

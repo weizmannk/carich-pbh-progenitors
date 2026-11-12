@@ -7,7 +7,7 @@ is undefined for D_L <= 0 Mpc).
 --z-known: known spectroscopic redshift (TNS). Do not trust the raw redshift
 at low z without cross-checking against NED/Tully-Fisher (peculiar velocities
 dominate). This module applies the given value as-is; that check happens
-upstream (src/ingest/).
+upstream (``carich.ingest``).
 """
 
 from __future__ import annotations

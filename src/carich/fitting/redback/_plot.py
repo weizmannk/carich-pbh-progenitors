@@ -43,10 +43,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
-from redback_models import DEFAULT_LIKELIHOOD, LIKELIHOODS, supports_extinction
+
+from ._models import DEFAULT_LIKELIHOOD, LIKELIHOODS, supports_extinction
 
 if TYPE_CHECKING:  # pragma: no cover
-    from fit_redback import RunConfig
+    from ._fit import RunConfig
 
 __all__ = ["lightcurve", "corner", "write_posterior_samples"]
 
@@ -76,14 +77,14 @@ def _local_themes() -> dict:
     """Palettes from an optional sibling module, absent from this repository.
 
     The branded Astro-COLIBRI figure (slate ground, the frontend's filter
-    colours, the logo) lives in ``plot_astrocolibri.py``, which is not
+    colours, the logo) lives in ``_plot_astrocolibri.py``, which is not
     versioned here: it carries another project's identity, so it is kept out
     of the repository and out of a paper figure. When the file is present its
     palettes join :data:`THEMES` and ``--plot-theme`` offers them; when it is
     not, nothing changes and only ``print`` exists.
     """
     try:
-        from plot_astrocolibri import THEMES as extra
+        from ._plot_astrocolibri import THEMES as extra
     except ImportError:
         return {}
     return dict(extra)
@@ -214,7 +215,7 @@ def effective_errors(cfg, result, errors, draws):
     on top of it, so the residual strip has to widen by the same amount, or the
     figure would show a bad fit that the inference never saw.
 
-    The formulae are redback's own, as :data:`redback_models.LIKELIHOODS`
+    The formulae are redback's own, as :data:`_models.LIKELIHOODS`
     records them: ``quadrature`` adds a constant in magnitudes, ``systematic``
     scales it by the model value.
     """
@@ -254,7 +255,7 @@ def _model_draws(result, model_name: str, times_mjd, bands, sncosmo_model=None):
         Shape ``(n_draws, len(times_mjd))``, or None when the model cannot be
         evaluated. The caller then plots data only rather than failing.
     """
-    from redback_models import (
+    from ._models import (
         SNCOSMO_MODEL,
         model_kwargs,
         observed_model,
@@ -339,7 +340,7 @@ def lightcurve(result, cfg: "RunConfig", transient, outdir: Path) -> Path | None
     errors = np.asarray(transient.y_err, dtype=float)
     bands = np.asarray(transient.bands)
 
-    from redback_models import time_parameter
+    from ._models import time_parameter
 
     time_key = time_parameter(cfg.model)
     t0_samples = (
