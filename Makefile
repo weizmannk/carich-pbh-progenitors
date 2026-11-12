@@ -10,12 +10,17 @@
 #   make setup-precommit: install pre-commit and its git hook (once, dev-only)
 #   make submit-nmma    : submit condor/submit_batch.py --backend nmma
 #                          (override TARGETS/MODEL/PRIOR, e.g. make submit-nmma MODEL=nugent-sn1a)
-#   make submit-redback : same for redback (override REDBACK_MODEL)
+#   make submit-redback : same for redback (override REDBACK_MODEL; arnett by default)
+#                          Both need ACCOUNTING_GROUP=<tag> on a LIGO pool.
 #   make test           : redback pipeline tests, without the sampling ones
 #   make test-all       : including the injection-recovery test (slow)
 #
-# Prerequisites (Mac):
-#   brew install cmake gfortran openblas open-mpi
+# Prerequisites: uv, git, cmake, gfortran and OpenBLAS (open-mpi for MOSFiT).
+#   macOS:          brew install cmake gfortran openblas open-mpi
+#   Debian, Ubuntu: apt install cmake gfortran libopenblas-dev liblapack-dev
+#   Rocky, RHEL:    dnf install cmake gcc-gfortran openblas-devel lapack-devel
+# If the libraries are elsewhere (a cluster module, conda), pass them:
+#   make setup-multinest BLAS_LIB=/path/libopenblas.so LAPACK_LIB=/path/liblapack.so
 # ==============================================================================
 
 UNAME := $(shell uname -s)
@@ -27,8 +32,14 @@ ifeq ($(UNAME), Darwin)
     LIB_PATH_VAR := DYLD_LIBRARY_PATH
 else
     ARCH := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null || echo x86_64-linux-gnu)
-    BLAS_LIB := /usr/lib/$(ARCH)/libopenblas.so
-    LAPACK_LIB := /usr/lib/$(ARCH)/liblapack.so
+    # Debian and Ubuntu keep the libraries in /usr/lib/<arch>; Rocky Linux and
+    # the other Red Hat systems, those of the LIGO clusters, in /usr/lib64.
+    # The first file that exists wins. OpenBLAS also provides LAPACK.
+    BLAS_LIB := $(firstword $(wildcard /usr/lib/$(ARCH)/libopenblas.so \
+        /usr/lib64/libopenblas.so) /usr/lib/$(ARCH)/libopenblas.so)
+    LAPACK_LIB := $(firstword $(wildcard /usr/lib/$(ARCH)/liblapack.so \
+        /usr/lib64/liblapack.so /usr/lib64/libopenblas.so) \
+        /usr/lib/$(ARCH)/liblapack.so)
     LIB_EXT := so
     LIB_PATH_VAR := LD_LIBRARY_PATH
 endif
@@ -100,10 +111,16 @@ setup-precommit:
 TARGETS ?= config/targets.csv
 MODEL ?= v19-1993j-corr
 PRIOR ?= config/priors/sncosmo-generic.prior
+# The LIGO pools refuse a job without an accounting tag:
+#   make submit-redback ACCOUNTING_GROUP=<tag>
+# SUBMIT_FLAGS=--dry-run writes the job scripts without submitting them.
+ACCOUNTING_GROUP ?=
+SUBMIT_FLAGS ?=
+CONDOR_FLAGS = $(if $(ACCOUNTING_GROUP),--accounting-group $(ACCOUNTING_GROUP)) $(SUBMIT_FLAGS)
 
 submit-nmma:
 	.venv-nmma/bin/python condor/submit_batch.py --backend nmma --targets $(TARGETS) \
-		--data-dir data/processed --outdir results/ \
+		--data-dir data/processed --outdir results/ $(CONDOR_FLAGS) \
 		-- --model $(MODEL) --prior $(PRIOR)
 
 # redback takes its own model names (see carich.fitting.redback.MODELS) and finds its
@@ -113,7 +130,7 @@ REDBACK_MODEL ?= arnett
 
 submit-redback:
 	.venv-redback/bin/python condor/submit_batch.py --backend redback --targets $(TARGETS) \
-		--data-dir data/processed --outdir results/ \
+		--data-dir data/processed --outdir results/ $(CONDOR_FLAGS) \
 		-- --model $(REDBACK_MODEL)
 
 # ------------------------------------------------------------------------

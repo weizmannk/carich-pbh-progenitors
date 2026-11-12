@@ -18,9 +18,16 @@ Installation
 The three fitters disagree on numpy and pandas, so each one gets its own
 environment, built with `uv <https://docs.astral.sh/uv/>`_ from an extra of
 ``pyproject.toml``. The package is installed in editable mode in each of
-them, because the data and the prior files stay in the repository::
+them, because the data and the prior files stay in the repository.
 
-    brew install cmake gfortran openblas open-mpi   # macOS
+The prerequisites are uv, git, cmake, gfortran and OpenBLAS::
+
+    brew install cmake gfortran openblas open-mpi                      # macOS
+    apt install cmake gfortran libopenblas-dev liblapack-dev           # Debian, Ubuntu
+    dnf install cmake gcc-gfortran openblas-devel lapack-devel         # Rocky, RHEL
+
+Then, on any of them::
+
     make setup-redback    # .venv-redback, the reference fits and the tests
     make setup-nmma       # .venv-nmma, template fits for comparison
     make setup-mosfit     # .venv-mosfit, cross-check, not implemented yet
@@ -28,7 +35,9 @@ them, because the data and the prior files stay in the repository::
 
 Never install two extras in the same environment. ``make setup-redback``
 and ``make setup-nmma`` also build MultiNest, which pymultinest loads when it
-is imported.
+is imported. The ``Makefile`` finds OpenBLAS by platform; on a cluster where
+it comes from a module or from conda, pass ``BLAS_LIB`` and ``LAPACK_LIB`` to
+``make setup-multinest``.
 
 Commands
 --------
@@ -52,13 +61,18 @@ environment variable ``ATLAS_TOKEN``::
 
     carich-fetch-atlas SN2021ugl 246.9820265 20.253166509091 59400 59480
 
-The fits are run as modules, one object and one model at a time;
-``run_redback_SN2021ugl.sh`` holds worked examples, and
-``condor/submit_batch.py`` submits one HTCondor job per row of
-``config/targets.csv``::
+The fits are run as modules, one object and one model at a time. The model
+that measures the nickel mass is ``arnett``; the templates and NMMA have no
+physical parameter and serve as controls. ``run_redback_SN2021ugl.sh`` holds
+worked examples::
 
     .venv-redback/bin/python -m carich.fitting.redback._fit \
         --object SN2021ugl --model arnett --outdir results/redback
+
+On an HTCondor pool, ``make submit-redback`` submits one ``arnett`` job per
+row of a target table. The LIGO pools require an accounting tag::
+
+    make submit-redback TARGETS=config/targets.csv ACCOUNTING_GROUP=<tag>
 
 Layout
 ------
