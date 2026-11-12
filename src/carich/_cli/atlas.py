@@ -20,7 +20,8 @@ def parser() -> argparse.ArgumentParser:
 def main(args=None) -> None:
     opts = parser().parse_args(args)
     text = request(opts.ra, opts.dec, opts.mjd_min, opts.mjd_max)
-    nights = stack(clean(read(text)))
+    # 5 sigma, the level that the fits assume for every limit of the file.
+    nights = stack(clean(read(text)), snr=5)
     write(nights, opts.outdir / f"{opts.name}.dat", append=True)
     detections = int((nights.magerr < float("inf")).sum())
     print(f"{opts.name}: {len(nights)} nights, {detections} detections")

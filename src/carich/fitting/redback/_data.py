@@ -167,7 +167,7 @@ def build_transient(
     rows: list[dict],
     name: str,
     *,
-    upper_limit_sigma: float = 3.0,
+    upper_limit_sigma: float = 5.0,
     data_tmin: float | None = None,
     data_tmax: float | None = None,
 ):
@@ -184,13 +184,13 @@ def build_transient(
     upper_limit_sigma : float, optional
         The sigma level of the non-detections. It sets the width of the
         survival term: ``sigma_UL = (2.5 / ln 10) / upper_limit_sigma``.
-        Default 3.0, which is redback's. It matters, a model exceeding a limit
-        by 1 mag is penalised -5.9 at sigma level 3 and -13.1 at 5, so it is
-        not a value to guess: this file format records no sigma level, and the
-        limits in it come from more than one survey (16 ATLAS and 7 ZTF on
-        SN2021ugl), which have no reason to share a convention. redback accepts
-        an array here, so a per-epoch level is the right answer once the
-        provenance is known.
+        Default 5.0, where redback's is 3.0, because the limits of the
+        photometry files are 5-sigma: ``mag5sig`` of ATLAS, the nightly stack
+        of ``carich-fetch-atlas`` and ``diffmaglim`` of the ZTF alerts. It
+        matters: a model exceeding a limit by 1 mag is penalised -5.9 at sigma
+        level 3 and -13.1 at 5. The file format records no sigma level, so a
+        file whose limits are at another level needs this argument. redback
+        also accepts an array, one level per limit.
     data_tmin, data_tmax : float, optional
         Window in days **relative to the first epoch**, the anchor redback's
         own examples use. ``data_tmin`` may

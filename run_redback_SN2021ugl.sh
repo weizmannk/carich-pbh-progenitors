@@ -6,7 +6,7 @@
 # Every parameter is written out, including those that have a default, so a run
 # can be read without consulting --help. The defaults are:
 #   --nlive 2048   --sampler pymultinest   --seed 42
-#   --upper-limit-sigma 3.0   --plot-theme print
+#   --upper-limit-sigma 5.0   --plot-theme print
 #   --priors              resolved automatically: priors_redback/<model>.prior,
 #                         or sncosmo_salt.prior / sncosmo_generic.prior on the
 #                         sncosmo path, by whether the template exposes x0.
@@ -113,7 +113,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
   --data data/processed/SN2021ugl.dat \
   --model shock_cooling_and_arnett \
   --priors priors_redback/shock_cooling_and_arnett.prior \
-  --upper-limit-sigma 3.0 \
+  --upper-limit-sigma 5.0 \
   --likelihood upper-limits \
   --nlive 2048 \
   --sampler pymultinest \
@@ -145,7 +145,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
   --priors priors_redback/sncosmo_generic.prior \
   --t0-min -30.0 \
   --t0-max 30.0 \
-  --upper-limit-sigma 3.0 \
+  --upper-limit-sigma 5.0 \
   --likelihood upper-limits \
   --nlive 2048 \
   --sampler pymultinest \
@@ -169,7 +169,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
   --priors priors_redback/sncosmo_salt.prior \
   --t0-min -30.0 \
   --t0-max 30.0 \
-  --upper-limit-sigma 3.0 \
+  --upper-limit-sigma 5.0 \
   --likelihood upper-limits \
   --nlive 2048 \
   --sampler pymultinest \
@@ -287,7 +287,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
   --model arnett \
   --priors priors_redback/arnett.prior \
   --ebv-mw 0.03 \
-  --upper-limit-sigma 3.0 \
+  --upper-limit-sigma 5.0 \
   --likelihood upper-limits \
   --nlive 512 \
   --sampler pymultinest \

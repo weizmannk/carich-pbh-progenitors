@@ -55,7 +55,8 @@ It writes ``selection.csv``, ``candidates.csv``, ``controls.csv`` and
 the Planck GNILC map, downloaded on first use; ``--no-extinction`` skips it.
 
 ``carich-fetch-atlas`` adds ATLAS forced photometry to the light curve of one
-object, stacked by night, in ``data/processed/<name>.dat``. It needs the
+object, stacked by night, in ``data/processed/<name>.dat``. Detections and
+limits are at 5 sigma, the level that the fits assume. It needs the
 token of a free account on https://fallingstar-data.com/forcedphot/ in the
 environment variable ``ATLAS_TOKEN``::
 

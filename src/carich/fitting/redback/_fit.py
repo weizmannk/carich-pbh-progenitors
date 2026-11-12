@@ -318,12 +318,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--upper-limit-sigma",
         type=float,
-        default=3.0,
+        default=5.0,
         dest="upper_limit_sigma",
-        help="Sigma level of the non-detections. redback's own default, 3.0, "
-        "which sets the survival width to (2.5/ln10)/3 = 0.362 mag. Raise it "
-        "only if the file's limits are known to be at another level; this one "
-        "records none",
+        help="Sigma level of the non-detections. 5.0, the level of the limits "
+        "in the photometry files: mag5sig of ATLAS, the nightly stack of "
+        "carich-fetch-atlas and diffmaglim of the ZTF alerts. It sets the "
+        "survival width to (2.5/ln10)/5 = 0.217 mag. redback's own default "
+        "is 3.0; pass it only for a file whose limits are 3-sigma",
     )
     parser.add_argument("--nlive", type=int, default=2048)
     parser.add_argument(
