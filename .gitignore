@@ -224,6 +224,7 @@ results/
 condor/jobs/
 
 # Astro-COLIBRI branding: another project's identity, kept out of this
-# repository. plot_redback falls back to the print palette without it.
-src/fitting/redback-fit/plot_astrocolibri.py
-src/fitting/redback-fit/logo/
+# repository. carich.fitting.redback._plot falls back to the print palette
+# without it.
+src/carich/fitting/redback/_plot_astrocolibri.py
+src/carich/fitting/redback/logo/

@@ -6,7 +6,7 @@
 # Every parameter is written out, including those that have a default, so a run
 # can be read without consulting --help. The defaults are:
 #   --nlive 2048   --sampler pymultinest   --seed 42
-#   --upper-limit-sigma 3.0   --plot-theme print
+#   --upper-limit-sigma 5.0   --plot-theme print
 #   --priors              resolved automatically: priors_redback/<model>.prior,
 #                         or sncosmo_salt.prior / sncosmo_generic.prior on the
 #                         sncosmo path, by whether the template exposes x0.
@@ -14,7 +14,7 @@
 #   --t0-min / --t0-max   NOT written out for the physical models: their
 #                         window is derived from each file's own cadence, from
 #                         the first epoch to the first detection, so there is
-#                         no fixed value to write. See redback_models.t0_window.
+#                         no fixed value to write. See t0_window in redback/_models.py.
 #                         It is 0 to +3.99 d on SN2021ugl and 0 to +6.04 d on
 #                         SN2020oi. The sncosmo blocks keep (-30, +30), which
 #                         bounds peak_time, maximum light rather than the
@@ -108,12 +108,12 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
 # Shock cooling + Arnett, the two peaks from physics. Gives M_Ni.
 # 12 free parameters, so the slowest of the three. kappa is left on redback's
 # own prior, Uniform(0.05, 2); see the --kappa variant at the end.
-.venv-redback/bin/python src/fitting/redback-fit/fit_redback.py \
+.venv-redback/bin/python -m carich.fitting.redback._fit \
   --object SN2021ugl \
   --data data/processed/SN2021ugl.dat \
   --model shock_cooling_and_arnett \
   --priors priors_redback/shock_cooling_and_arnett.prior \
-  --upper-limit-sigma 3.0 \
+  --upper-limit-sigma 5.0 \
   --likelihood upper-limits \
   --nlive 2048 \
   --sampler pymultinest \
@@ -137,7 +137,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
 # the early data outside the template (ln Z -1723 against -32).
 #
 # 4 free parameters: redshift, peak_time, amplitude, ebv.
-.venv-redback/bin/python src/fitting/redback-fit/fit_redback.py \
+.venv-redback/bin/python -m carich.fitting.redback._fit \
   --object SN2021ugl \
   --data data/processed/SN2021ugl.dat \
   --model sncosmo_models \
@@ -145,7 +145,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
   --priors priors_redback/sncosmo_generic.prior \
   --t0-min -30.0 \
   --t0-max 30.0 \
-  --upper-limit-sigma 3.0 \
+  --upper-limit-sigma 5.0 \
   --likelihood upper-limits \
   --nlive 2048 \
   --sampler pymultinest \
@@ -161,7 +161,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
 # SALT3, same interface, as a control: it is a Type Ia template, so a worse fit
 # here is the expected answer for a IIb. Takes x0, x1, c instead of amplitude,
 # so 6 free parameters, on redback's own priors/salt2.prior values.
-.venv-redback/bin/python src/fitting/redback-fit/fit_redback.py \
+.venv-redback/bin/python -m carich.fitting.redback._fit \
   --object SN2021ugl \
   --data data/processed/SN2021ugl.dat \
   --model sncosmo_models \
@@ -169,7 +169,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
   --priors priors_redback/sncosmo_salt.prior \
   --t0-min -30.0 \
   --t0-max 30.0 \
-  --upper-limit-sigma 3.0 \
+  --upper-limit-sigma 5.0 \
   --likelihood upper-limits \
   --nlive 2048 \
   --sampler pymultinest \
@@ -186,7 +186,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
 # closest redback gets to the NMMA command at the end of this file. sigma is
 # sampled, not given: --sigma-sys-max only bounds it. Its ln Z is not
 # comparable with the three runs above, which keep the 23 limits.
-.venv-redback/bin/python src/fitting/redback-fit/fit_redback.py \
+.venv-redback/bin/python -m carich.fitting.redback._fit \
   --object SN2021ugl \
   --data data/processed/SN2021ugl.dat \
   --model sncosmo_models \
@@ -252,10 +252,10 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
 # Its data come from an Astro-COLIBRI CSV rather than the ZTF ingest, so they
 # were converted separately: 25 rows kept of 58, the 33 the file flags 'bad'
 # dropped on Astro-COLIBRI's own call and never rewritten. What is left is
-# ztfg 9 detections + 2 limits, ztfr 10 + 4. The converter is not in this
-# repository; src/ingest/fetch_ztf.py writes the same format but cannot read
-# that CSV, since it discards every row whose 'mag' is empty, which is every
-# upper limit (their value sits in 'mag_ul').
+# ztfg 9 detections + 2 limits, ztfr 10 + 4. The converter is
+# carich.ingest._astrocolibri; carich.ingest._ztf writes the same format but
+# cannot read that CSV, since it discards every row whose 'mag' is empty,
+# which is every upper limit (their value sits in 'mag_ul').
 #
 # No --t0-min/--t0-max: the window is derived from this file's own cadence,
 # [58849.503, 58855.542], i.e. from the first epoch to the first detection,
@@ -268,7 +268,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
 # upper bound on a marginalised av_mw, never as a value, so the larger number
 # merely widens what the data may choose and the tighter one risks clipping.
 # The 14% is worth 0.0154 mag in g, well under this object's 0.03-0.07 mag
-# photometric errors. Note fit_nmma.py does apply 0.86 to its own SFD bound,
+# photometric errors. Note carich.fitting.nmma._fit does apply 0.86 to its own SFD bound,
 # so a side-by-side NMMA run would bound at 0.0258 rather than 0.03.
 #
 # --ebv-mw takes precedence over a --ra/--dec map query, so no coordinates are
@@ -277,17 +277,17 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
 # The conversion, run once. 25 rows of 58 kept: the 33 Astro-COLIBRI flags
 # 'bad' are dropped on its own verdict. Band names are checked against
 # sncosmo's registry, so an unknown filter stops here and not hours into a fit.
-.venv-redback/bin/python src/ingest/astrocolibri_csv.py \
+.venv-redback/bin/python -m carich.ingest._astrocolibri \
   --object SN2020oi \
   --csv Astro-COLIBRI_SN2020oi_lightcurve_2019-12-31_2020-06-30_created2026-11-05_ZTF_LSST.csv
 
-.venv-redback/bin/python src/fitting/redback-fit/fit_redback.py \
+.venv-redback/bin/python -m carich.fitting.redback._fit \
   --object SN2020oi \
   --data data/processed/SN2020oi.dat \
   --model arnett \
   --priors priors_redback/arnett.prior \
   --ebv-mw 0.03 \
-  --upper-limit-sigma 3.0 \
+  --upper-limit-sigma 5.0 \
   --likelihood upper-limits \
   --nlive 512 \
   --sampler pymultinest \
@@ -300,7 +300,7 @@ export DYLD_LIBRARY_PATH="$HOME/.local/lib:$DYLD_LIBRARY_PATH"
   --outdir results/redback/sca-test2
 
 
-.venv-redback/bin/python src/fitting/redback-fit/fit_redback.py \
+.venv-redback/bin/python -m carich.fitting.redback._fit \
   --object SN2020oi \
   --data data/processed/SN2020oi.dat \
   --model shock_cooling_and_arnett \

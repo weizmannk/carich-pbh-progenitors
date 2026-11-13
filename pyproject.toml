@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools >= 77", "setuptools_scm >= 8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "carich"
+dynamic = ["version"]
+authors = [{name = "Weizmann Kiendrébéogo"}]
+description = "Faint hydrogen-poor transients as a test of dark-matter-triggered white dwarf explosions"
+readme = "README.rst"
+requires-python = ">=3.12"
+dependencies = [
+    "astropy",
+    "dust-extinction >= 1.7",
+    "dustmaps",
+    "numpy",
+    "pandas",
+    "requests",
+    "sncosmo",
+]
+
+[project.optional-dependencies]
+# The three fitters disagree on numpy and pandas, so each gets its own
+# environment: `pip install -e ".[redback]"`, never two extras together.
+#
+# redback. The versions are pinned so that `make setup-redback` reproduces
+# the published fits. Bump them deliberately, then run
+# carich.fitting.redback.check_against_redback(), which reports any prior
+# key that a redback upgrade renamed instead of letting it change a fit.
+redback = [
+    # The afterglow extra pulls afterglowpy; redback itself brings bilby,
+    # sncosmo and extinction.
+    "redback[afterglow] == 1.20.0",
+    # pymultinest is the default sampler and loads libmultinest when it is
+    # imported, so `make setup-multinest` must have run first. dynesty is
+    # the pure Python fallback.
+    "pymultinest == 2.12",
+    "dynesty == 3.1.0",
+    "bilby == 2.8.2",
+    # Transitive through redback, but pinned because the package calls them
+    # itself.
+    "numpy == 2.5.4",
+    "pandas == 3.0.6",
+    "astropy == 8.0.1",
+    "matplotlib == 3.11.2",
+]
+# nmma comes from GitHub at v1.0.2, which fixes bugs of the latest release
+# on PyPI, 1.0.1. It needs Python >= 3.12, < 3.14.
+nmma = ["nmma @ git+https://github.com/nuclear-multimessenger-astronomy/nmma@v1.0.2"]
+# MOSFiT 1.3 (2026-08-08) pins numpy <= 1.26.4 and pandas >= 2.1, which
+# redback 1.18 and later, on numpy 2, cannot share.
+mosfit = [
+    "mosfit",
+    "numpy <= 1.26.4",
+    "pandas >= 2.1",
+    "mpi4py >= 3.1.6",
+    "schwimmbad == 0.3.0",
+]
+test = ["pytest"]
+
+[project.scripts]
+carich-select = "carich._cli.select:main"
+carich-fetch-atlas = "carich._cli.atlas:main"
+
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+testpaths = ["src"]
+markers = ["slow: samples a posterior; excluded by `-m 'not slow'`"]
+# bilby reads its .prior files through unicode_escape, which Python 3.12
+# deprecates. Not ours to fix, and it would otherwise drown the summary.
+filterwarnings = [
+    "ignore:invalid escape sequence:DeprecationWarning",
+    "ignore::DeprecationWarning:bilby.*",
+]
+
+[tool.ruff.lint]
+extend-select = ["I"]
